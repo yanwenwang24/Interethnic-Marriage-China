@@ -87,14 +87,8 @@ edu_rank_df_men = @chain edu_rank_df_men begin
     )
 end
 
-# Join to the sample (only Han and Southern minorities)
-sample = @chain sample begin
-    @subset(
-        :ethngrp .== "Han" .|| :ethngrp .== "Southern",
-        :ethngrp_sp .== "Han" .|| :ethngrp_sp .== "Southern"
-    )
-end
-
+# Join to the sample
+# Rename columsn for compatiblity with functions
 sample_EI = select(
     sample,
     :year, :birthy, :birthy_sp,
@@ -223,9 +217,16 @@ EI_df_short = @chain EI_df begin
         )
     )
     @transform(:EI = string.(:EI, :sign))
-    @select(:ethngrp_pair, :who, :EI)
+    @select(:ethngrp, :ethngrp_pair, :who, :EI)
     unstack(:who, :EI)
 end
 
 println(EI_df)
 println(EI_df_short)
+
+# By larger group: Southern minorities for example
+x = "Southern"
+ethngrp_EI_df = filter_by_ethnic_group(EI_df, ethngrp_dict2, x)
+ethngrp_EI_df_short = filter_by_ethnic_group(EI_df_short, ethngrp_dict2, x)
+print(ethngrp_EI_df)
+print(ethngrp_EI_df_short)

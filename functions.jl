@@ -297,3 +297,14 @@ function extract_p(df)
     p_value = min(p_hus, p_wif)
     return p_value
 end
+
+# Get individual ethnicities from ethnic groups
+function get_ethnicities_by_group(dict, target_group)
+    return [key for (key, value) in dict if value == target_group]
+end
+
+# Function to filter DataFrame by ethnic group
+function filter_by_ethnic_group(df, dict, target_group)
+    target_ethnicities = get_ethnicities_by_group(dict, target_group)
+    return filter(row -> row.ethngrp in target_ethnicities, df)
+end
