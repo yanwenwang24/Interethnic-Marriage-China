@@ -14,7 +14,7 @@
 
 # Load the required packages
 using DataFrames, DataFramesMeta, CategoricalArrays
-using Feather, Shapefile
+using Arrow, Shapefile
 using StatsBase, Random, FreqTables, ProportionalFitting, GLM
 using AlgebraOfGraphics, CairoMakie, MakieThemes
 using RCall
@@ -28,5 +28,5 @@ set_theme!(theme_ggthemr(:fresh))
 include("functions.jl")
 
 # Load data
-census = Feather.read("Data_cleaned/census.feather")
-sample = Feather.read("Data_cleaned/sample.feather")
+census = DataFrame(Arrow.Table("Data_cleaned/census.arrow"))
+sample = DataFrame(Arrow.Table("Data_cleaned/sample.arrow"))

@@ -14,7 +14,7 @@
 
 # Load the required packages
 using DataFrames, DataFramesMeta, CategoricalArrays
-using Feather, Shapefile
+using Arrow, Shapefile
 using StatsBase, Random, FreqTables, ProportionalFitting, GLM
 using AlgebraOfGraphics, CairoMakie, MakieThemes
 using RCall

@@ -14,12 +14,6 @@
 
 # 1 Combine cleaned data --------------------------------------------------
 
-# Load cleaned data
-# census_1982 = Feather.read("Data_cleaned/census_1982.feather")
-# census_1990 = Feather.read("Data_cleaned/census_1990.feather")
-# census_2000 = Feather.read("Data_cleaned/census_2000.feather")
-# census_2010 = Feather.read("Data_cleaned/census_2010.feather")
-
 # Combine cleaned data
 census = vcat(census_1982, census_1990, census_2000, census_2010)
 
@@ -139,4 +133,4 @@ census = leftjoin!(census, entropy_df, on=[:year, :province, :district])
 
 # 3 Save ------------------------------------------------------------------
 
-Feather.write("Data_cleaned/census.feather", census)
+Arrow.write("Data_cleaned/census.arrow", census)

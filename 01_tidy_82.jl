@@ -14,13 +14,13 @@
 
 # 1 Load data ---------------------------------------------------------------      
 
-# Read dta file (original) and convert to feather format
-# using StatFiles, Feather
+# Read dta file (original) and convert to arrow format
+# using StatFiles, Arrow
 # census_1982 = DataFrame(load("Data_original/1982_census.dta"))
-# Feather.write("Data_original/census_1982.feather", census_1982)
+# Arrow.write("Data_original/census_1982.arrow", census_1982)
 
-# Read feather file
-census_1982 = Feather.read("Data_original/census_1982.feather")
+# Read arrow file
+census_1982 = DataFrame(Arrow.Table("Data_original/census_1982.arrow"))
 
 # 2 Clean data --------------------------------------------------------------
 
@@ -106,4 +106,4 @@ end
 
 # 3 Save data ---------------------------------------------------------------
 
-Feather.write("Data_cleaned/census_1982.feather", census_1982)
+Arrow.write("Data_cleaned/census_1982.arrow", census_1982)

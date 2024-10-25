@@ -35,4 +35,4 @@ sample = filter(
 
 # 2 Save sample -----------------------------------------------------------
 
-Feather.write("Data_cleaned/sample.feather", sample)
+Arrow.write("Data_cleaned/sample.arrow", sample)
