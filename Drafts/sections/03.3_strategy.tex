@@ -1,0 +1,70 @@
+
+\subsection{Analytical strategy}
+
+Log-linear models are the gold standard for analyzing marriage patterns,
+as they allow us to estimate spousal associations while controlling for marginal distributions of
+characteristics like ethnicity and education.
+This control is particularly important
+because ethnic and educational compositions of husbands and wives differ and change over time,
+and observed marriage pattners are typically different from those expected under random sorting.
+Following convention, we refer to these spousal associations as assortative mating preferences,
+though they reflect the causes to observed patterns deviating from random ones
+rather than directly measured preferences.
+
+We employ two sets of log-linear models.
+The frist set estimates marriages by husband's and wife's ethncity (nine categories each)
+across four census years (1980, 1990, 2000, and 2010),
+yielding 144 cells ($9 \times 9 \times 4 = 144$) after cross-tabulation.
+The baseline model is specified as:
+
+\begin{equation}
+    \log F_{ijt} = \beta_0 + \beta_i^{HG} + \beta_j^{WG} + \beta_t^T + \beta_{it}^{HGT} + \beta_{jt}^{WGT}
+\end{equation}
+
+\noindent where $F_{ijt}$ is the number of marriages
+between husbands in ethnic group $i$ and wives in ethnic group $j$ in year $t$,
+$\beta_0$ is the constant,
+$\beta_i^{HG}$ and $\beta_j^{WG}$ are husbands' and wives' ethnic groups, respectively,
+$\beta_t^T$ represents the year,
+and $\beta_{it}^{HGT}$ and $\beta_{jt}^{WGT}$ denote
+the interactions between year and ethnic group for husbands and wives, respectively.
+
+In our second set of models, we incorporate educational attainment alongside ethnicity.
+These models predict the number of marriages for each combination of husband's and wife's
+ethnicity and education across census years, yielding 2,916 cells ($9 \times 9 \times 3 \times 3 \times 4 = 2,916$).
+The baseline model is specified as:
+
+\begin{equation}
+    \log F_{ijmnt} = \beta_0 + \beta_i^{HG} + \beta_j^{WG} + \beta_m^{HE} + \beta_n^{WE} +
+    \beta_t^T + \beta_{imt}^{HGET} + \beta_{jnt}^{WGET}
+\end{equation}
+
+\noindent where $F_{ijmnt}$ is the number of marriages
+between husbands in ethnic group $i$ and education group $m$ and wives in ethnic group $j$ and education group $n$ in year $t$.
+In addition to the previously defined parameters,
+$\beta_m^{HE}$ and $\beta_n^{WE}$ denote husbands' and wives' education, respectively,
+and $\beta_{imt}^{HGET}$ and $\beta_{jnt}^{WGET}$ capture all two- and three-way interactions
+between ethnic group, education, and year for husbands and wives, respectively.
+
+While log-linear models effectively disentangle assortative mating preferences from marginal distributions,
+their use in analyzing status exchange within minority-majority intermarriages has notable limitations:
+they are complex, subject to controversial specifications and interpretations, and unable to capture detailed status differentiation.
+To address these limitations, we employ the Exchange Index,
+a model-free approach proposed by \citeauthor{xie_new_2021} \citeyear{xie_new_2021}
+that offers straightforward and unambiguous interpretation.
+
+The Exchange Index computation involves three essential steps for each gender-specific ethnic pairing:
+
+\begin{enumerate}
+    \item Converting educational attainment into percentile ranks within gender and 11-year moving cohorts,
+    \item Performing full exact matching between treated (interethnic marriage) and control (intra-ethnic marriage) cases,
+          based on husbands' educational percentile and age, then wives',
+    \item Estimating the difference in spousal educational percentiles between intra- and interethnic marriages
+          using weighted samples matched by husbands' and wives' characteristics.
+\end{enumerate}
+
+The resulting indices ($EI_{H}$ and $EI_{W}$) indicate the average difference in spousal educational status
+between inter- and intra-ethnic marriages, from both husbands' and wives' perspectives.
+Had the majority status been privileged would the indicaes of Han individuals be significantly positive
+and that of minorities be significantly negative,
+and vice versa if the minority status was considered more desirable.
