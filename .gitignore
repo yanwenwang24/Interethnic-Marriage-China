@@ -1,6 +1,7 @@
 Data_cleaned/
 Data_original/
 .DS_Store
+*.pdf
 *.aux
 *.bbl
 *.bcf
