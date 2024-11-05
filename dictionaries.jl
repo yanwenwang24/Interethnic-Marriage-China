@@ -158,7 +158,43 @@ ethngrp_dict2 = Dict(
     "基诺族" => "Southern"
 )
 
-# 2 Marital status -------------------------------------------------------------
+# 2 Region ---------------------------------------------------------------------
+
+region_dict = Dict(
+    "11" => "Huabei",
+    "12" => "Huabei",
+    "13" => "Huabei",
+    "14" => "Huabei",
+    "15" => "Huabei",
+    "21" => "Dongbei",
+    "22" => "Dongbei",
+    "23" => "Dongbei",
+    "31" => "HuaDong",
+    "32" => "HuaDong",
+    "33" => "HuaDong",
+    "34" => "HuaDong",
+    "35" => "HuaDong",
+    "36" => "HuaDong",
+    "37" => "HuaDong",
+    "41" => "Zhongnan",
+    "42" => "Zhongnan",
+    "43" => "Zhongnan",
+    "44" => "Zhongnan",
+    "45" => "Zhongnan",
+    "46" => "Zhongnan",
+    "50" => "Xinan",
+    "51" => "Xinan",
+    "52" => "Xinan",
+    "53" => "Xinan",
+    "54" => "Xinan",
+    "61" => "Xibei",
+    "62" => "Xibei",
+    "63" => "Xibei",
+    "64" => "Xibei",
+    "65" => "Xibei"
+)
+
+# 3 Marital status -------------------------------------------------------------
 
 marst_dict = Dict(
     1 => "never-married",
@@ -167,7 +203,7 @@ marst_dict = Dict(
     4 => "widowed"
 )
 
-# 3 Education -------------------------------------------------------------------
+# 4 Education -------------------------------------------------------------------
 
 # Census 1982, 1990, 2000
 eduraw_map = Vector{Union{Missing,Int}}(undef, 100)

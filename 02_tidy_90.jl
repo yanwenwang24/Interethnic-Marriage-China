@@ -39,6 +39,7 @@ census_1990 = @chain census_1990 begin
         :hhnumber = lpad.(Int.(:serial), 10, "0"),
         :hhsize = :persons
     )
+    @transform(:region = get.(Ref(region_dict), :province, missing))
     @transform(:hhid = string.(:year, "_", :province, :district, :hhnumber))
     @transform(
         :minority = ifelse.(:ethniccn .== 1, 0, 1),
@@ -54,7 +55,7 @@ census_1990 = @chain census_1990 begin
     )
     @transform(:urban = 999) # missing urban status
     @select(
-        :year, :hhid, :province, :district, :hhnumber,
+        :year, :hhid, :region, :province, :district, :hhnumber,
         :pernum, :headloc, :sploc,
         :relate, :female, :age, :birthy, :marst, :urban, :hhsize,
         :eduraw, :edu,

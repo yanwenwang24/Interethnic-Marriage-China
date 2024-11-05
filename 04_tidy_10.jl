@@ -51,6 +51,7 @@ census_2010 = @chain census_2010 begin
         :district = lpad.(parse.(Int, :地址码) .÷ 100000000000 .% 100, 2, "0"),
         :hhsize = :persons
     )
+    @transform(:region = get.(Ref(region_dict), :province, missing))
     @transform(:hhid = string.(:year, "_", :province, :district, :hhnumber))
     @transform(
         :minority = ifelse.(:ethniccn .== 1, 0, 1),
@@ -63,7 +64,7 @@ census_2010 = @chain census_2010 begin
     @transform(:eduraw = get.(Ref(eduraw_2010_dict), :educcn, missing))
     @transform(:edu = get.(Ref(edu_2010_dict), :educcn, missing))
     @select(
-        :year, :hhid, :province, :district, :hhnumber,
+        :year, :hhid, :region, :province, :district, :hhnumber,
         :relate, :female, :age, :birthy, :marst, :maryr, :urban, :hhsize,
         :eduraw, :edu,
         :ethnicity, :ethngrp, :minority
