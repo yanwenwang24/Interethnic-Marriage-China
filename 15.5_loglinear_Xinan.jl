@@ -425,6 +425,16 @@ odd_ratio_df = vcat(odd_ref, odd_ratio_df)
 @transform!(odd_ratio_df, :year = categorical(:year))
 odd_ratio_df = @orderby(odd_ratio_df, :ethngrp, :year)
 
+# Select ethnic groups with significant presence
+@chain sample begin
+    @subset(:region .== "Xinan")
+    @groupby(:ethngrp_f)
+    @combine(:n = length(:ethngrp_f))
+    @subset(:n .> 500)
+end
+
+@subset!(odd_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern" .|| :ethngrp .== "Tibetan")
+
 # Plot
 f = Figure(; size=(800, 600), fontsize=12)
 
