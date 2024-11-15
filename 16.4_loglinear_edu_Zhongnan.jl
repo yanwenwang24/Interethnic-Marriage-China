@@ -273,6 +273,7 @@ odd_ratio_df = @orderby(odd_ratio_df, :ethngrp, :edu)
 end
 
 @subset!(odd_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern")
+odd_ratio_Zhongnan = @transform(odd_ratio_df, :region = "South Central")
 
 # Plot
 f = Figure(; size=(800, 600), fontsize = 12)
