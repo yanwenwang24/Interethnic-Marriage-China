@@ -1,6 +1,6 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 15.5_loglinear_Xinan.jl
+## Script name: 15.5_loglinear_ethngrp_Xinan.jl
 ## Purpose: Use log-linear models to analyze interethnic marriage in Xinan
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-06

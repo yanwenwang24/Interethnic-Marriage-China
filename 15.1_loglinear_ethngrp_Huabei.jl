@@ -1,6 +1,6 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 15.1_loglinear_Huabei.jl
+## Script name: 15.1_loglinear_ethngrp_Huabei.jl
 ## Purpose: Use log-linear models to analyze interethnic marriage in Huabei
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-06

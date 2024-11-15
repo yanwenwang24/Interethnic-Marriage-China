@@ -1,6 +1,6 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 15.2_loglinear_Dongbei.jl
+## Script name: 15.2_loglinear_ethngrp_Dongbei.jl
 ## Purpose: Use log-linear models to analyze interethnic marriage in Dongbei
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-06

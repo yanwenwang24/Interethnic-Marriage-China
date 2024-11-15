@@ -1,6 +1,6 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 15.3_loglinear_Huadong.jl
+## Script name: 15.3_loglinear_ethngrp_Huadong.jl
 ## Purpose: Use log-linear models to analyze interethnic marriage in Huadong
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-06

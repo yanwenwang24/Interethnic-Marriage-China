@@ -1,3 +1,17 @@
+## ------------------------------------------------------------------------
+##
+## Script name: 15.7_loglinear_ethngrp_region.jl
+## Purpose: Generate graphs by region
+## Author: Yanwen Wang
+## Date Created: 2024-11-15
+## Email: yanwenwang@u.nus.edu
+##
+## ------------------------------------------------------------------------
+##
+## Notes:
+##
+## ------------------------------------------------------------------------
+
 odd_ratio_df = vcat(
     odd_ratio_Huabei,
     odd_ratio_Dongbei,

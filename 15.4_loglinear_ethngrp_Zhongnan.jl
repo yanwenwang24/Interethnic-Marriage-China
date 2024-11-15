@@ -1,6 +1,6 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 15.4_loglinear_Zhongnan.jl
+## Script name: 15.4_loglinear_ethngrp_Zhongnan.jl
 ## Purpose: Use log-linear models to analyze interethnic marriage in Zhongnan
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-06
