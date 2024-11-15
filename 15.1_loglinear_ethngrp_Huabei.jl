@@ -475,7 +475,7 @@ legend!(f[1, 2], plt)
 
 f
 
-save("graphs/inter_odds_Huabei.png", f; px_per_unit=2)
+save("graphs/inter_odds_ethngrp_Huabei.png", f; px_per_unit=2)
 
 # Expotentiate coefficients
 @chain odd_ratio_df begin
