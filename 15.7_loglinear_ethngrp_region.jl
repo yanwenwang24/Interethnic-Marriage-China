@@ -21,6 +21,8 @@ odd_ratio_df = vcat(
     odd_ratio_Xibei
 )
 
+@transform!(odd_ratio_df, :region = categorical(:region, levels=["North", "Northeast", "East", "South Central", "Southwest", "Northwest"]))
+
 # Plot
 f = Figure(; size=(1600, 1200), fontsize=12)
 
