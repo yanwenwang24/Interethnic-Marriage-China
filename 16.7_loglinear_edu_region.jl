@@ -50,12 +50,12 @@ plt = draw!(
     f[1, 1],
     odd_ratio_plt + hlines_plt,
     scales(
-        DodgeX=(; width=0.5),
-        Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
+        DodgeX = (; width = 0.5),
+        Color=(; palette=["#d7e1ee", "#bfcbdb", "#a4a2a8", "#c86558", "#991f17"])
     ),
     axis=(;
-        yticks=-12:2:2,
-        limits=(nothing, (-12, 1))
+        yticks=-10:2:2,
+        limits=(nothing, (-9, 1))
     )
 )
 
