@@ -66,3 +66,15 @@ legend!(f[1, 2], plt)
 f
 
 save("graphs/inter_odds_edu_region.png", f; px_per_unit=2)
+
+# Expotentiate the coefficients
+@chain odd_ratio_df begin
+    @transform(:ratio = round.(exp.(:Coef) * 1000, digits=2))
+    @transform(
+        :Coef = round.(:Coef, digits=2),
+        :SE = round.(:SE, digits=2),
+    )
+    @select(:region, :ethngrp, :edu, :Coef, :SE, :ratio)
+    @subset(:ethngrp .== "Manchu")
+    println
+end
