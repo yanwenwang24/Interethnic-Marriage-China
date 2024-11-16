@@ -75,6 +75,5 @@ save("graphs/inter_odds_edu_region.png", f; px_per_unit=2)
         :SE = round.(:SE, digits=2),
     )
     @select(:region, :ethngrp, :edu, :Coef, :SE, :ratio)
-    @subset(:ethngrp .== "Manchu")
     println
 end
