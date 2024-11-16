@@ -217,3 +217,6 @@ end
 
 println(EI_df)
 println(EI_df_short)
+
+EI_df_Dongbei = @transform(EI_df, :region = "Northeast")
+EI_df_short_Dongbei = @transform(EI_df_short, :region = "Northeast")

@@ -217,3 +217,6 @@ end
 
 println(EI_df)
 println(EI_df_short)
+
+EI_df_Xinan = @transform(EI_df, :region = "Southwest")
+EI_df_short_Xinan = @transform(EI_df_short, :region = "Southwest")
