@@ -47,6 +47,31 @@ end
 
 prop_by_ethngrp_year = vcat(prop_women_by_ethngrp_year, prop_men_by_ethngrp_year)
 
+# Plot
+f = Figure(; size=(1200, 800), fontsize=12)
+
+inter_ethngrp_plt = data(prop_by_ethngrp_year) *
+                    mapping(
+                        :year => "",
+                        :prop => "Proportion",
+                        color=:sex => "Gender",
+                        layout=:ethngrp
+                    ) *
+                    visual(ScatterLines)
+
+plt = draw!(
+    f[1, 1],
+    inter_ethngrp_plt,
+    scales(Color=(; palette=["#b3bfd1", "#b04238"])),
+    
+)
+
+legend!(f[1, 2], plt)
+
+f
+
+save("graphs/inter_by_ethngrp.png", f; px_per_unit=2)
+
 # 3 By Education ----------------------------------------------------------
 
 # Women
@@ -97,7 +122,7 @@ plt = draw!(
     inter_by_edu_plt,
     scales(Color=(; palette=["#d7e1ee", "#a4a2a8", "#991f17"])),
     axis=(;
-        yticks=0:0.2:1, 
+        yticks=0:0.2:1,
         limits=(nothing, (0, 1))
     )
 )
