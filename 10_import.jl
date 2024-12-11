@@ -24,7 +24,8 @@ R"library(MatchIt)"
 
 set_theme!(theme_ggthemr(:fresh))
 
-# Load functions
+# Load dictionaries and functions
+include("dictionaries.jl")
 include("functions.jl")
 
 # Load data
