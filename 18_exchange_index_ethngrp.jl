@@ -119,7 +119,7 @@ EI_df = DataFrame(
 
 for i in ethngrp_vector
     # Retrieve sample
-    hus_df, wif_df = retrieve_sample(i, "wif")
+    hus_df, wif_df = retrieve_sample(i, "wif", balance_distribution=false)
     # Match samples
     matched_hus_df, matched_wif_df = matchit(hus_df, wif_df)
     # Calculate EI
@@ -152,7 +152,7 @@ EI_df = DataFrame(
 
 for i in ethngrp_vector
     # Retrieve sample
-    hus_df, wif_df = retrieve_sample(i, "hus")
+    hus_df, wif_df = retrieve_sample(i, "hus", balance_distribution=false)
     # Match samples
     matched_hus_df, matched_wif_df = matchit(hus_df, wif_df)
     # Calculate EI
