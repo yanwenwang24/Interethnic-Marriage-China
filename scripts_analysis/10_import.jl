@@ -19,6 +19,7 @@ using CairoMakie
 using CategoricalArrays
 using DataFrames
 using DataFramesMeta
+using Distributions
 using FreqTables
 using GLM
 using MakieThemes
