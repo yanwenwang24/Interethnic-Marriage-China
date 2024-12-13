@@ -12,25 +12,31 @@
 ##
 ## ------------------------------------------------------------------------
 
-odd_ratio_df = vcat(
-    odd_ratio_Huabei,
-    odd_ratio_Dongbei,
-    odd_ratio_Huadong,
-    odd_ratio_Zhongnan,
-    odd_ratio_Xinan,
-    odd_ratio_Xibei
+odds_ratio_df = vcat(
+    odds_ratio_Huabei,
+    odds_ratio_Dongbei,
+    odds_ratio_Huadong,
+    odds_ratio_Zhongnan,
+    odds_ratio_Xinan,
+    odds_ratio_Xibei
 )
 
-@transform!(odd_ratio_df, :region = categorical(:region, levels=["North", "Northeast", "East", "South Central", "Southwest", "Northwest"]))
+@transform!(
+    odds_ratio_df,
+    :region = categorical(
+        :region,
+        levels=["North", "Northeast", "East", "South Central", "Southwest", "Northwest"]
+    )
+)
 
 # Plot
 f = Figure(; size=(1600, 1200), fontsize=12)
 
-odd_ratio_plt = data(odd_ratio_df) * (
+odds_ratio_plt = data(odds_ratio_df) * (
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
-        :SE,
+        :coefficient => "Coefficient (Log Scale)",
+        :std_error,
         dodge_x=:year => "Year",
         color=:year => "Year",
         layout=:region => "Region"
@@ -38,7 +44,7 @@ odd_ratio_plt = data(odd_ratio_df) * (
     visual(Errorbars) +
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
+        :coefficient => "Coefficient (Log Scale)",
         dodge_x=:year => "Year",
         color=:year => "Year",
         layout=:region => "Region"
@@ -50,7 +56,7 @@ hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
 
 plt = draw!(
     f[1, 1],
-    odd_ratio_plt + hlines_plt,
+    odds_ratio_plt + hlines_plt,
     scales(
         DodgeX=(; width=0.5),
         Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])

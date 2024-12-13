@@ -195,7 +195,7 @@ odds_ratio_df = calculate_combined_coefficients(M2d)
 # Plot
 f = Figure(; size=(800, 600), fontsize=12)
 
-odd_ratio_plt = data(odds_ratio_df) * (
+odds_ratio_plt = data(odds_ratio_df) * (
     mapping(
         :ethngrp => "",
         :coefficient => "Coefficient (Log Scale)",
@@ -217,7 +217,7 @@ hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
 
 plt = draw!(
     f[1, 1],
-    odd_ratio_plt + hlines_plt,
+    odds_ratio_plt + hlines_plt,
     scales(
         DodgeX=(; width=0.5),
         Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])

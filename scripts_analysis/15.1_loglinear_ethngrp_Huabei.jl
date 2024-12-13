@@ -63,63 +63,6 @@ diag_aff_levels = [
     "Inter_minority"
 ]
 
-aff_var_Hui_levels = [
-    "Intra",
-    "Inter_HanHui(hus)", "Inter_HanHui(wif)",
-    "Inter_HanKazakh", "Inter_HanKorean",
-    "Inter_HanManchu", "Inter_HanMongolian", "Inter_HanSouthern", "Inter_HanTibetan", "Inter_HanUyghur",
-    "Inter_minority"
-]
-
-aff_var_Kazakh_levels = [
-    "Intra",
-    "Inter_HanHui", "Inter_HanKazakh(hus)", "Inter_HanKazakh(wif)",
-    "Inter_HanKorean",
-    "Inter_HanManchu", "Inter_HanMongolian", "Inter_HanSouthern", "Inter_HanTibetan", "Inter_HanUyghur",
-    "Inter_minority"
-]
-
-aff_var_Korean_levels = [
-    "Intra",
-    "Inter_HanHui", "Inter_HanKazakh", "Inter_HanKorean(hus)", "Inter_HanKorean(wif)",
-    "Inter_HanManchu", "Inter_HanMongolian", "Inter_HanSouthern", "Inter_HanTibetan", "Inter_HanUyghur",
-    "Inter_minority"
-]
-
-aff_var_Manchu_levels = [
-    "Intra",
-    "Inter_HanHui", "Inter_HanKazakh", "Inter_HanKorean", "Inter_HanManchu(hus)", "Inter_HanManchu(wif)",
-    "Inter_HanMongolian", "Inter_HanSouthern", "Inter_HanTibetan", "Inter_HanUyghur",
-    "Inter_minority"
-]
-
-aff_var_Mongolian_levels = [
-    "Intra",
-    "Inter_HanHui", "Inter_HanKazakh", "Inter_HanKorean", "Inter_HanManchu", "Inter_HanMongolian(hus)", "Inter_HanMongolian(wif)",
-    "Inter_HanSouthern", "Inter_HanTibetan", "Inter_HanUyghur",
-    "Inter_minority"
-]
-
-aff_var_Southern_levels = [
-    "Intra",
-    "Inter_HanHui", "Inter_HanKazakh", "Inter_HanKorean", "Inter_HanManchu", "Inter_HanMongolian", "Inter_HanSouthern(hus)", "Inter_HanSouthern(wif)",
-    "Inter_HanTibetan", "Inter_HanUyghur",
-    "Inter_minority"
-]
-
-aff_var_Tibetan_levels = [
-    "Intra",
-    "Inter_HanHui", "Inter_HanKazakh", "Inter_HanKorean", "Inter_HanManchu", "Inter_HanMongolian", "Inter_HanSouthern", "Inter_HanTibetan(hus)", "Inter_HanTibetan(wif)",
-    "Inter_HanUyghur",
-    "Inter_minority"
-]
-
-aff_var_Uyghur_levels = [
-    "Intra",
-    "Inter_HanHui", "Inter_HanKazakh", "Inter_HanKorean", "Inter_HanManchu", "Inter_HanMongolian", "Inter_HanSouthern", "Inter_HanTibetan", "Inter_HanUyghur(hus)", "Inter_HanUyghur(wif)",
-    "Inter_minority"
-]
-
 # 2.2 Main parameters ------------------------------------------------------
 
 count_df = @chain count_df begin
@@ -192,122 +135,6 @@ count_df = @chain count_df begin
     @transform(:diag_aff = categorical(:diag_aff, levels=diag_aff_levels))
 end
 
-# 2.3 Gender parameters ----------------------------------------------------
-
-count_df = @chain count_df begin
-    # Gender pairing Hui
-    @transform(
-        :aff_var_Hui = ifelse.(
-            :aff_var .== "Inter_HanHui" .&& :ethngrp_f .== "Hui",
-            "Inter_HanHui(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanHui" .&& :ethngrp_m .== "Hui",
-                "Inter_HanHui(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Hui = categorical(String.(:aff_var_Hui), levels=aff_var_Hui_levels))
-
-    # Gender pairing Kazakh
-    @transform(
-        :aff_var_Kazakh = ifelse.(
-            :aff_var .== "Inter_HanKazakh" .&& :ethngrp_f .== "Kazakh",
-            "Inter_HanKazakh(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanKazakh" .&& :ethngrp_m .== "Kazakh",
-                "Inter_HanKazakh(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Kazakh = categorical(String.(:aff_var_Kazakh), levels=aff_var_Kazakh_levels))
-
-    # Gender pairing Korean
-    @transform(
-        :aff_var_Korean = ifelse.(
-            :aff_var .== "Inter_HanKorean" .&& :ethngrp_f .== "Korean",
-            "Inter_HanKorean(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanKorean" .&& :ethngrp_m .== "Korean",
-                "Inter_HanKorean(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Korean = categorical(String.(:aff_var_Korean), levels=aff_var_Korean_levels))
-
-    # Gender pairing Manchu
-    @transform(
-        :aff_var_Manchu = ifelse.(
-            :aff_var .== "Inter_HanManchu" .&& :ethngrp_f .== "Manchu",
-            "Inter_HanManchu(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanManchu" .&& :ethngrp_m .== "Manchu",
-                "Inter_HanManchu(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Manchu = categorical(String.(:aff_var_Manchu), levels=aff_var_Manchu_levels))
-
-    # Gender pairing Mongolian
-    @transform(
-        :aff_var_Mongolian = ifelse.(
-            :aff_var .== "Inter_HanMongolian" .&& :ethngrp_f .== "Mongolian",
-            "Inter_HanMongolian(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanMongolian" .&& :ethngrp_m .== "Mongolian",
-                "Inter_HanMongolian(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Mongolian = categorical(String.(:aff_var_Mongolian), levels=aff_var_Mongolian_levels))
-
-    # Gender pairing Southern
-    @transform(
-        :aff_var_Southern = ifelse.(
-            :aff_var .== "Inter_HanSouthern" .&& :ethngrp_f .== "Southern",
-            "Inter_HanSouthern(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanSouthern" .&& :ethngrp_m .== "Southern",
-                "Inter_HanSouthern(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Southern = categorical(String.(:aff_var_Southern), levels=aff_var_Southern_levels))
-
-    # Gender pairing Tibetan
-    @transform(
-        :aff_var_Tibetan = ifelse.(
-            :aff_var .== "Inter_HanTibetan" .&& :ethngrp_f .== "Tibetan",
-            "Inter_HanTibetan(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanTibetan" .&& :ethngrp_m .== "Tibetan",
-                "Inter_HanTibetan(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Tibetan = categorical(String.(:aff_var_Tibetan), levels=aff_var_Tibetan_levels))
-
-    # Gender pairing Uyghur
-    @transform(
-        :aff_var_Uyghur = ifelse.(
-            :aff_var .== "Inter_HanUyghur" .&& :ethngrp_f .== "Uyghur",
-            "Inter_HanUyghur(hus)",
-            ifelse.(
-                :aff_var .== "Inter_HanUyghur" .&& :ethngrp_m .== "Uyghur",
-                "Inter_HanUyghur(wif)",
-                :aff_var
-            )
-        )
-    )
-    @transform(:aff_var_Uyghur = categorical(String.(:aff_var_Uyghur), levels=aff_var_Uyghur_levels))
-end
-
 count_df = @chain count_df begin
     @transform(
         :n = Int64.(:n),
@@ -330,30 +157,20 @@ M1c = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + diag_var), count_df
 M1d = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var), count_df, Poisson())
 M1e = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + diag_aff), count_df, Poisson())
 
-M2a = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Hui), count_df, Poisson())
-M2b = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Kazakh), count_df, Poisson())
-M2c = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Korean), count_df, Poisson())
-M2d = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Manchu), count_df, Poisson())
-M2e = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Mongolian), count_df, Poisson())
-M2f = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Southern), count_df, Poisson())
-M2g = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Tibetan), count_df, Poisson())
-M2h = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var_Uyghur), count_df, Poisson())
+M2a = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag * year), count_df, Poisson())
+M2b = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + aff * year), count_df, Poisson())
+M2c = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag_var * year), count_df, Poisson())
+M2d = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + aff_var * year), count_df, Poisson())
+M2e = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag_aff * year), count_df, Poisson())
 
-M3a = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag * year), count_df, Poisson())
-M3b = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + aff * year), count_df, Poisson())
-M3c = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag_var * year), count_df, Poisson())
-M3d = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + aff_var * year), count_df, Poisson())
-M3e = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag_aff * year), count_df, Poisson())
-
-M4 = glm(@formula(n ~ year * ethngrp_f * ethngrp_m), count_df, Poisson())
+M3 = glm(@formula(n ~ year * ethngrp_f * ethngrp_m), count_df, Poisson())
 
 # Store models in a dictionary
 model_dict = Dict(
     "M0" => M0,
     "M1a" => M1a, "M1b" => M1b, "M1c" => M1c, "M1d" => M1d, "M1e" => M1e,
-    "M2a" => M2a, "M2b" => M2b, "M2c" => M2c, "M2d" => M2d, "M2e" => M2e, "M2f" => M2f, "M2g" => M2g, "M2h" => M2h,
-    "M3a" => M3a, "M3b" => M3b, "M3c" => M3c, "M3d" => M3d, "M3e" => M3e,
-    "M4" => M4
+    "M2a" => M2a, "M2b" => M2b, "M2c" => M2c, "M2d" => M2d, "M2e" => M2e,
+    "M3" => M3
 )
 
 # 3.2 Model comparison -----------------------------------------------------
@@ -377,53 +194,8 @@ println(gof_df)
 
 # 3.3 Odd ratios -----------------------------------------------------------
 
-# Model selected: M3d
-coef_M3d_df = DataFrame(coeftable(M3d))
-
-# Select odd ratios for each ethnic group in 1982 (reference year)
-odd_ref = @chain coef_M3d_df begin
-    @subset(startswith.(:Name, "aff_var: Inter_Han"))
-    @subset(.!occursin.("year", :Name))
-    @transform(:Name = replace.(:Name, "aff_var: Inter_Han" => ""))
-end
-
-rename!(odd_ref, names(odd_ref)[1:3] .=> [:ethngrp, :Coef, :SE])
-@select!(odd_ref, :ethngrp, :Coef, :SE)
-
-# Select interaction terms with years
-pattern = r"^aff_var: Inter_Han.* & year.*"
-
-odd_change = @subset(coef_M3d_df, occursin.(pattern, :Name))
-
-# Identify ethnic group and year from selected variables
-pattern = r"^aff_var: Inter_Han\s*(?<ethngrp>[\w\s\-]+).* & year\s*:?\s*(?<year>\d+)"
-
-odd_change = @chain odd_change begin
-    @transform(:Match = match.(Ref(pattern), :Name))
-    @transform(
-        :ethngrp = ByRow(m -> m !== nothing ? m["ethngrp"] : missing)(:Match),
-        :year = ByRow(m -> m !== nothing ? parse(Int, m["year"]) : missing)(:Match)
-    )
-    @select(Not(:Match))
-end
-
-rename!(odd_change, names(odd_change)[2:3] .=> [:Coef, :SE])
-@select!(odd_change, :ethngrp, :year, :Coef, :SE)
-
-odd_ratio_df = leftjoin(odd_change, odd_ref, on=:ethngrp, renamecols="" => "_1982")
-
-# Calculate odd ratios in 1990, 2000, and 2010
-odd_ratio_df = @chain odd_ratio_df begin
-    @transform(:Coef = :Coef .+ :Coef_1982)
-    @transform(:SE = sqrt.(:SE .^ 2 .+ :SE_1982 .^ 2))
-    @select(:ethngrp, :year, :Coef, :SE)
-end
-
-# Combine with the base year 1982
-odd_ref = @transform(odd_ref, :year = 1982)
-odd_ratio_df = vcat(odd_ref, odd_ratio_df)
-@transform!(odd_ratio_df, :year = categorical(:year))
-odd_ratio_df = @orderby(odd_ratio_df, :ethngrp, :year)
+# Model selected: M2d
+odds_ratio_df = calculate_combined_coefficients(M2d)
 
 # Select ethnic groups with significant presence
 @chain sample begin
@@ -433,24 +205,24 @@ odd_ratio_df = @orderby(odd_ratio_df, :ethngrp, :year)
     @subset(:n .> 500)
 end
 
-@subset!(odd_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Manchu" .|| :ethngrp .== "Mongolian")
-odd_ratio_Huabei = @transform(odd_ratio_df, :region = "North")
+@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Manchu" .|| :ethngrp .== "Mongolian")
+odds_ratio_Huabei = @transform(odds_ratio_df, :region = "North")
 
 # Plot
 f = Figure(; size=(800, 600), fontsize=12)
 
-odd_ratio_plt = data(odd_ratio_df) * (
+odds_ratio_plt = data(odds_ratio_df) * (
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
-        :SE,
+        :coefficient => "Coefficient (Log Scale)",
+        :std_error,
         dodge_x=:year => "Year",
         color=:year => "Year"
     ) *
     visual(Errorbars) +
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
+        :coefficient => "Coefficient (Log Scale)",
         dodge_x=:year => "Year",
         color=:year => "Year"
     ) *
@@ -461,7 +233,7 @@ hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
 
 plt = draw!(
     f[1, 1],
-    odd_ratio_plt + hlines_plt,
+    odds_ratio_plt + hlines_plt,
     scales(
         DodgeX=(; width=0.5),
         Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
@@ -488,3 +260,8 @@ save("graphs/inter_odds_ethngrp_Huabei.png", f; px_per_unit=2)
     @select(:ethngrp, :year, :Coef, :SE, :ratio)
     println()
 end
+
+# 3.4 Gender asymmetry ------------------------------------------------------
+
+gender_asymmetry_df = analyze_all_minorities(count_df)
+println(gender_asymmetry_df)
