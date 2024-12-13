@@ -13,11 +13,12 @@
 ## ------------------------------------------------------------------------
 
 # Load the required packages
-using DataFrames, DataFramesMeta, CategoricalArrays
-using Arrow, Shapefile
-using StatsBase, Random, FreqTables, ProportionalFitting, GLM
-using AlgebraOfGraphics, CairoMakie, MakieThemes
-using RCall
+using Arrow
+using CategoricalArrays
+using DataFrames
+using DataFramesMeta
+using FreqTables
+using StatsBase
 
 # Load dictionaries and functions
 include("dictionaries.jl")
