@@ -22,6 +22,7 @@ using DataFramesMeta
 using Distributions
 using FreqTables
 using GLM
+using LinearAlgebra
 using MakieThemes
 using ProportionalFitting
 using Random
