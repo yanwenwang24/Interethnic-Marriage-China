@@ -217,52 +217,8 @@ println(gof_df)
 # 3.3 Odd ratios -----------------------------------------------------------
 
 # Model selected: M3a
-coef_M3a_df = DataFrame(coeftable(M3a))
-
-# Select odd ratios of intermarraiges for each ethnic group in heter1 (reference level)
-odd_ref = @chain coef_M3a_df begin
-    @subset(startswith.(:Name, "diag_aff: Inter_Han"))
-    @subset(.!occursin.("edu", :Name))
-    @transform(:Name = replace.(:Name, "diag_aff: Inter_Han" => ""))
-end
-
-rename!(odd_ref, names(odd_ref)[1:3] .=> [:ethngrp, :Coef, :SE])
-@select!(odd_ref, :ethngrp, :Coef, :SE)
-
-# Select interaction terms with educational pairing
-pattern = r"^diag_aff: Inter_Han.* & edu_diag_aff.*"
-
-odd_change = @subset(coef_M3a_df, occursin.(pattern, :Name))
-
-# Identify ethnic group and year from selected variables
-pattern = r"^diag_aff: Inter_Han\s*(?<ethngrp>[\w\s\-]+).* & edu_diag_aff: \s*(?<edu>[\w\s\-]+)"
-
-odd_change = @chain odd_change begin
-    @transform(:Match = match.(Ref(pattern), :Name))
-    @transform(
-        :ethngrp = ByRow(m -> m !== nothing ? m["ethngrp"] : missing)(:Match),
-        :edu = ByRow(m -> m !== nothing ? m["edu"] : missing)(:Match)
-    )
-    @select(Not(:Match))
-end
-
-rename!(odd_change, names(odd_change)[2:3] .=> [:Coef, :SE])
-@select!(odd_change, :ethngrp, :edu, :Coef, :SE)
-
-odd_ratio_df = leftjoin(odd_change, odd_ref, on=:ethngrp, renamecols="" => "_heter1")
-
-# Calculate odd ratios at other educational levels
-odd_ratio_df = @chain odd_ratio_df begin
-    @transform(:Coef = :Coef .+ :Coef_heter1)
-    @transform(:SE = sqrt.(:SE .^ 2 .+ :SE_heter1 .^ 2))
-    @select(:ethngrp, :edu, :Coef, :SE)
-end
-
-# Combine with the base year 1982
-odd_ref = @transform(odd_ref, :edu = "heter1")
-odd_ratio_df = vcat(odd_ref, odd_ratio_df)
-@transform!(odd_ratio_df, :edu = categorical(:edu, levels=["homo1", "homo2", "homo3", "heter1", "heter2"]))
-odd_ratio_df = @orderby(odd_ratio_df, :ethngrp, :edu)
+odds_ratio_df = calculate_combined_education_coefficients(M3a)
+odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
 # Select ethnic groups with significant presence
 @chain sample begin
@@ -272,26 +228,26 @@ odd_ratio_df = @orderby(odd_ratio_df, :ethngrp, :edu)
     @subset(:n .> 500)
 end
 
-@subset!(odd_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Manchu" .|| :ethngrp .== "Mongolian")
-odd_ratio_Huabei = @transform(odd_ratio_df, :region = "North")
+@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Manchu" .|| :ethngrp .== "Mongolian")
+odds_ratio_Huabei = @transform(odds_ratio_df, :region = "North")
 
 # Plot
 f = Figure(; size=(800, 600), fontsize = 12)
 
-odd_ratio_plt = data(
-    odd_ratio_df
+odds_ratio_plt = data(
+    @subset(odds_ratio_df, :ethngrp .!= "Kazakh" .&& :ethngrp .!= "Uyghur")
     ) * (
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
-        :SE,
+        :coefficient => "Coefficient (Log Scale)",
+        :std_bar,
         dodge_x = :edu => "Education",
         color=:edu => "Education"
     ) *
     visual(Errorbars) +
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
+        :coefficient => "Coefficient (Log Scale)",
         dodge_x = :edu => "Education",
         color=:edu => "Education"
     ) *
@@ -302,7 +258,7 @@ hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
 
 plt = draw!(
     f[1, 1],
-    odd_ratio_plt + hlines_plt,
+    odds_ratio_plt + hlines_plt,
     scales(
         DodgeX = (; width = 0.5),
         Color=(; palette=["#d7e1ee", "#bfcbdb", "#a4a2a8", "#c86558", "#991f17"])
@@ -320,12 +276,12 @@ f
 save("graphs/inter_odds_edu_Huabei.png", f; px_per_unit=2)
 
 # Expotentiate the coefficients
-@chain odd_ratio_df begin
-    @transform(:ratio = round.(exp.(:Coef) * 1000, digits=2))
+@chain odds_ratio_df begin
+    @transform(:ratio = round.(exp.(:coefficient) * 1000, digits=2))
     @transform(
-        :Coef = round.(:Coef, digits=2),
-        :SE = round.(:SE, digits=2),
+        :coefficient = round.(:coefficient, digits=2),
+        :std_error = round.(:std_error, digits=2),
     )
-    @select(:ethngrp, :edu, :Coef, :SE, :ratio)
+    @select(:ethngrp, :edu, :coefficient, :std_error, :ratio)
     println
 end

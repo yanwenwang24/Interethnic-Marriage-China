@@ -12,25 +12,25 @@
 ##
 ## ------------------------------------------------------------------------
 
-odd_ratio_df = vcat(
-    odd_ratio_Huabei,
-    odd_ratio_Dongbei,
-    odd_ratio_Huadong,
-    odd_ratio_Zhongnan,
-    odd_ratio_Xinan,
-    odd_ratio_Xibei
+odds_ratio_df = vcat(
+    odds_ratio_Huabei,
+    odds_ratio_Dongbei,
+    odds_ratio_Huadong,
+    odds_ratio_Zhongnan,
+    odds_ratio_Xinan,
+    odds_ratio_Xibei
 )
 
-@transform!(odd_ratio_df, :region = categorical(:region, levels=["North", "Northeast", "East", "South Central", "Southwest", "Northwest"]))
+@transform!(odds_ratio_df, :region = categorical(:region, levels=["North", "Northeast", "East", "South Central", "Southwest", "Northwest"]))
 
 # Plot
 f = Figure(; size=(1600, 1200), fontsize=12)
 
-odd_ratio_plt = data(odd_ratio_df) * (
+odds_ratio_plt = data(odds_ratio_df) * (
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
-        :SE,
+        :coefficient => "Coefficient (Log Scale)",
+        :std_bar,
         dodge_x = :edu => "Education",
         color=:edu => "Education",
         layout=:region => "Region"
@@ -38,7 +38,7 @@ odd_ratio_plt = data(odd_ratio_df) * (
     visual(Errorbars) +
     mapping(
         :ethngrp => "",
-        :Coef => "Coefficient (Log Scale)",
+        :coefficient => "Coefficient (Log Scale)",
         dodge_x = :edu => "Education",
         color=:edu => "Education",
         layout=:region => "Region"
@@ -50,7 +50,7 @@ hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
 
 plt = draw!(
     f[1, 1],
-    odd_ratio_plt + hlines_plt,
+    odds_ratio_plt + hlines_plt,
     scales(
         DodgeX = (; width = 0.5),
         Color=(; palette=["#d7e1ee", "#bfcbdb", "#a4a2a8", "#c86558", "#991f17"])
@@ -68,12 +68,12 @@ f
 save("graphs/inter_odds_edu_region.png", f; px_per_unit=2)
 
 # Expotentiate the coefficients
-@chain odd_ratio_df begin
-    @transform(:ratio = round.(exp.(:Coef) * 1000, digits=2))
+@chain odds_ratio_df begin
+    @transform(:ratio = round.(exp.(:coefficient) * 1000, digits=2))
     @transform(
-        :Coef = round.(:Coef, digits=2),
-        :SE = round.(:SE, digits=2),
+        :coefficient = round.(:coefficient, digits=2),
+        :std_error = round.(:std_error, digits=2),
     )
-    @select(:region, :ethngrp, :edu, :Coef, :SE, :ratio)
+    @select(:region, :ethngrp, :edu, :coefficient, :std_error, :ratio)
     println
 end
