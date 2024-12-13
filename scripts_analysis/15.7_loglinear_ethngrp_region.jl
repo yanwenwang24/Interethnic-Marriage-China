@@ -36,7 +36,7 @@ odds_ratio_plt = data(odds_ratio_df) * (
     mapping(
         :ethngrp => "",
         :coefficient => "Coefficient (Log Scale)",
-        :std_error,
+        :std_bar,
         dodge_x=:year => "Year",
         color=:year => "Year",
         layout=:region => "Region"

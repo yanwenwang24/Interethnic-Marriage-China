@@ -191,6 +191,7 @@ println(gof_df)
 
 # Model selected: M2d
 odds_ratio_df = calculate_combined_coefficients(M2d)
+odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
 # Plot
 f = Figure(; size=(800, 600), fontsize=12)
@@ -199,7 +200,7 @@ odds_ratio_plt = data(odds_ratio_df) * (
     mapping(
         :ethngrp => "",
         :coefficient => "Coefficient (Log Scale)",
-        :std_error,
+        :std_bar,
         dodge_x=:year => "Year",
         color=:year => "Year"
     ) *

@@ -196,6 +196,7 @@ println(gof_df)
 
 # Model selected: M2d
 odds_ratio_df = calculate_combined_coefficients(M2d)
+odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
 # Select ethnic groups with significant presence
 @chain sample begin
@@ -215,7 +216,7 @@ odds_ratio_plt = data(odds_ratio_df) * (
     mapping(
         :ethngrp => "",
         :coefficient => "Coefficient (Log Scale)",
-        :std_error,
+        :std_bar,
         dodge_x=:year => "Year",
         color=:year => "Year"
     ) *
@@ -251,13 +252,13 @@ f
 save("graphs/inter_odds_ethngrp_Zhongnan.png", f; px_per_unit=2)
 
 # Expotentiate coefficients
-@chain odd_ratio_df begin
-    @transform(:ratio = round.(exp.(:Coef) * 1000, digits=2))
+@chain odds_ratio_df begin
+    @transform(:ratio = round.(exp.(:coefficient) * 1000, digits=2))
     @transform(
-        :Coef = round.(:Coef, digits=2),
-        :SE = round.(:SE, digits=2),
+        :coefficient = round.(:coefficient, digits=2),
+        :std_error = round.(:std_error, digits=2),
     )
-    @select(:ethngrp, :year, :Coef, :SE, :ratio)
+    @select(:ethngrp, :year, :coefficient, :std_error, :ratio)
     println()
 end
 
