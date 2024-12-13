@@ -13,11 +13,20 @@
 ## ------------------------------------------------------------------------
 
 # Load the required packages
-using DataFrames, DataFramesMeta, CategoricalArrays
-using Arrow, Shapefile
-using StatsBase, Random, FreqTables, ProportionalFitting, GLM
-using AlgebraOfGraphics, CairoMakie, MakieThemes
+using AlgebraOfGraphics
+using Arrow
+using CairoMakie
+using CategoricalArrays
+using DataFrames
+using DataFramesMeta
+using FreqTables
+using GLM
+using MakieThemes
+using ProportionalFitting
+using Random
 using RCall
+using Shapefile
+using StatsBase
 
 R"library(tidyverse)"
 R"library(MatchIt)"
@@ -25,7 +34,7 @@ R"library(MatchIt)"
 set_theme!(theme_ggthemr(:fresh))
 
 # Load dictionaries and functions
-include("dictionaries.jl")
+include("../scripts_tidy/dictionaries.jl")
 include("functions.jl")
 
 # Load data
