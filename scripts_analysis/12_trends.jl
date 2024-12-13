@@ -63,7 +63,7 @@ plt = draw!(
     f[1, 1],
     inter_ethngrp_plt,
     scales(Color=(; palette=["#b3bfd1", "#b04238"])),
-    
+    axis=(; xticks=[1982, 1990, 2000, 2010])
 )
 
 legend!(f[1, 2], plt)
