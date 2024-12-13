@@ -104,6 +104,232 @@ function goodness_of_fit(model, model_name::String)
     )
 end
 
+# Log-linear models ------------------------------------------------------
+
+# Functions for extracting coefficients and calculating odds ratios
+function extract_baseline_coefficients(model)
+    # Get coefficient table and identify actual column names
+    coef_df = DataFrame(coeftable(model))
+    coef_colname = names(coef_df)[2]  # Coefficient column
+    se_colname = names(coef_df)[3]    # Standard error column
+
+    # Extract baseline coefficients for Han-minority marriages
+    baseline_coefficients = @chain coef_df begin
+        @subset(startswith.(:Name, "aff_var: Inter_Han"))
+        @subset(.!occursin.("year", :Name))
+        @transform(:ethngrp = replace.(:Name, "aff_var: Inter_Han" => ""))
+        @select(:ethngrp, $coef_colname, $se_colname)
+    end
+
+    rename!(baseline_coefficients, [coef_colname, se_colname] .=> ["coefficient", "std_error"])
+    return baseline_coefficients
+end
+
+function extract_year_interactions(model)
+    coef_df = DataFrame(coeftable(model))
+    coef_colname = names(coef_df)[2]
+    se_colname = names(coef_df)[3]
+    pattern = r"^aff_var: Inter_Han\s*(?<ethngrp>[\w\s\-]+).* & year\s*:?\s*(?<year>\d+)"
+
+    # Extract and process year interaction terms
+    year_coefficients = @chain coef_df begin
+        @subset(occursin.(r"^aff_var: Inter_Han.* & year.*", :Name))
+        @transform(:Match = match.(Ref(pattern), :Name))
+        @transform(
+            :ethngrp = ByRow(m -> m !== nothing ? m["ethngrp"] : missing)(:Match),
+            :year = ByRow(m -> m !== nothing ? parse(Int, m["year"]) : missing)(:Match)
+        )
+        @select(:ethngrp, :year, $coef_colname, $se_colname)
+    end
+
+    rename!(year_coefficients, [coef_colname, se_colname] .=> ["coefficient", "std_error"])
+    return year_coefficients
+end
+
+function calculate_combined_coefficients(model, base_year=1982)
+    # Get variance-covariance matrix
+    vcov_matrix = vcov(model)
+    coef_names = coefnames(model)
+
+    # Extract baseline and year interaction coefficients
+    baseline_coef = extract_baseline_coefficients(model)
+    year_coef = extract_year_interactions(model)
+
+    # Initialize results DataFrame
+    results = DataFrame(
+        ethngrp=String[],
+        year=Int[],
+        coefficient=Float64[],
+        std_error=Float64[]
+    )
+
+    # Add baseline year results
+    for row in eachrow(baseline_coef)
+        push!(results, (row.ethngrp, base_year, row.coefficient, row.std_error))
+    end
+
+    # Calculate combined coefficients and their standard errors for each year
+    for minority in unique(baseline_coef.ethngrp)
+        base_idx = findfirst(x -> occursin("aff_var: Inter_Han$minority", x), coef_names)
+
+        if isnothing(base_idx)
+            continue
+        end
+
+        for year_row in eachrow(filter(r -> r.ethngrp == minority, year_coef))
+            year_term = "aff_var: Inter_Han$(minority) & year: $(year_row.year)"
+            year_idx = findfirst(x -> x == year_term, coef_names)
+
+            if isnothing(year_idx)
+                continue
+            end
+
+            # Calculate combined coefficient
+            combined_coef = baseline_coef[baseline_coef.ethngrp.==minority, :coefficient][1] +
+                            year_row.coefficient
+
+            # Calculate proper standard error using variance-covariance matrix
+            combined_var = vcov_matrix[base_idx, base_idx] +
+                           vcov_matrix[year_idx, year_idx] +
+                           2 * vcov_matrix[base_idx, year_idx]
+            combined_se = sqrt(combined_var)
+
+            push!(results, (minority, year_row.year, combined_coef, combined_se))
+        end
+    end
+
+    # Sort results
+    sort!(results, [:ethngrp, :year])
+    transform!(results, :year => categorical, renamecols=false)
+
+    return results
+end
+
+# Functions for testing gender asymmetry in interethnic marriages
+function analyze_gender_asymmetry(count_data::DataFrame, minority_group::String)
+    analysis_data = @chain count_data begin
+        # Create baseline intermarriage indicator
+        @transform(
+            :base_inter = ifelse.(
+                (:ethngrp_f .== minority_group .&& :ethngrp_m .== "Han") .||
+                (:ethngrp_f .== "Han" .&& :ethngrp_m .== minority_group),
+                1,
+                0
+            )
+        )
+        @transform(:base_inter = categorical(:base_inter, levels=[0, 1]))
+
+        # Create gender-specific intermarriage categories
+        @transform(
+            :gender_inter = ifelse.(
+                (:ethngrp_f .== minority_group .&& :ethngrp_m .== "Han"),
+                string(minority_group, "(wif)"),
+                ifelse.(
+                    (:ethngrp_f .== "Han" .&& :ethngrp_m .== minority_group),
+                    string(minority_group, "(hus)"),
+                    "None"
+                )
+            )
+        )
+        @transform(:gender_inter = categorical(
+            :gender_inter,
+            levels=["None", string(minority_group, "(hus)"), string(minority_group, "(wif)")]
+        ))
+    end
+
+    # Fit models
+    baseline_model = glm(
+        @formula(n ~ year * ethngrp_f + year * ethngrp_m + base_inter),
+        analysis_data,
+        Poisson()
+    )
+
+    gender_model = glm(
+        @formula(n ~ year * ethngrp_f + year * ethngrp_m + gender_inter),
+        analysis_data,
+        Poisson()
+    )
+
+    # Likelihood ratio test
+    ll_difference = loglikelihood(gender_model) - loglikelihood(baseline_model)
+    lr_statistic = 2 * ll_difference
+    lr_p_value = 1 - cdf(Chisq(1), lr_statistic)
+
+    # Extract coefficients
+    coef_names = coefnames(gender_model)
+    hus_index = findfirst(x -> occursin(string(minority_group, "(hus)"), String(x)), coef_names)
+    wif_index = findfirst(x -> occursin(string(minority_group, "(wif)"), String(x)), coef_names)
+
+    if isnothing(hus_index) || isnothing(wif_index)
+        error("Could not find gender-specific coefficients for $minority_group")
+    end
+
+    # Calculate statistics
+    coefficient = coef(gender_model)[hus_index] - coef(gender_model)[wif_index]
+    pooled_se = sqrt(vcov(gender_model)[hus_index, hus_index] +
+                     vcov(gender_model)[wif_index, wif_index] -
+                     2 * vcov(gender_model)[hus_index, wif_index])
+
+    z_statistic = coefficient / pooled_se
+    wald_p_value = 2 * (1 - cdf(Normal(), abs(z_statistic)))
+    odds_ratio = exp(coefficient)
+
+    return Dict(
+        "minority_group" => minority_group,
+        "coefficient" => coefficient,
+        "std_error" => pooled_se,
+        "z_statistic" => z_statistic,
+        "wald_p_value" => wald_p_value,
+        "odds_ratio" => odds_ratio,
+        "lr_statistic" => lr_statistic,
+        "lr_p_value" => lr_p_value
+    )
+end
+
+function analyze_all_minorities(count_data::DataFrame)
+    minority_groups = ethngrp_vector[ethngrp_vector.!="Han"]
+
+    # Initialize results with named columns
+    results = DataFrame(
+        minority_group=String[],
+        coefficient=Float64[],
+        std_error=Float64[],
+        z_statistic=Float64[],
+        wald_p_value=Float64[],
+        odds_ratio=Float64[],
+        lr_statistic=Float64[],
+        lr_p_value=Float64[]
+    )
+
+    for minority in minority_groups
+        try
+            analysis = analyze_gender_asymmetry(count_data, minority)
+
+            # Create a named tuple for insertion
+            row = (
+                minority_group=analysis["minority_group"],
+                coefficient=analysis["coefficient"],
+                std_error=analysis["std_error"],
+                z_statistic=analysis["z_statistic"],
+                wald_p_value=analysis["wald_p_value"],
+                odds_ratio=analysis["odds_ratio"],
+                lr_statistic=analysis["lr_statistic"],
+                lr_p_value=analysis["lr_p_value"]
+            )
+
+            push!(results, row)
+
+        catch e
+            println("Error analyzing $minority: ", e)
+        end
+    end
+
+    # Sort results by minority group
+    sort!(results, :minority_group)
+
+    return results
+end
+
 # Exchange Index ---------------------------------------------------------
 
 """
