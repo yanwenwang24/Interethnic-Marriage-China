@@ -106,7 +106,7 @@ end
 
 # Log-linear models ------------------------------------------------------
 
-# Functions for extracting coefficients and calculating odds ratios
+# Functions for extracting coefficients from log-linear models on ethnicity
 function extract_baseline_coefficients(model)
     # Get coefficient table and identify actual column names
     coef_df = DataFrame(coeftable(model))
@@ -203,6 +203,108 @@ function calculate_combined_coefficients(model, base_year=1982)
     transform!(results, :year => categorical, renamecols=false)
 
     return results
+end
+
+# Functions for extracting coefficients from log-linear models on ethnicity and eduction
+function extract_baseline_ethnic_education(model)
+    coef_df = DataFrame(coeftable(model))
+    coef_colname = names(coef_df)[2]
+    se_colname = names(coef_df)[3]
+    
+    baseline_coefficients = @chain coef_df begin
+        @subset(startswith.(:Name, "diag_aff: Inter_Han"))
+        @subset(.!occursin.("edu", :Name))
+        @transform(:ethngrp = replace.(:Name, "diag_aff: Inter_Han" => ""))
+        @select(:ethngrp, $coef_colname, $se_colname)
+    end
+    
+    rename!(baseline_coefficients, [coef_colname, se_colname] .=> ["coefficient", "std_error"])
+    return baseline_coefficients
+end
+
+function extract_education_interactions(model)
+    coef_df = DataFrame(coeftable(model))
+    coef_colname = names(coef_df)[2]
+    se_colname = names(coef_df)[3]
+    pattern = r"^diag_aff: Inter_Han\s*(?<ethngrp>[\w\s\-]+).* & edu_diag_aff: \s*(?<edu>[\w\s\-]+)"
+    
+    education_coefficients = @chain coef_df begin
+        @subset(occursin.(r"^diag_aff: Inter_Han.* & edu_diag_aff.*", :Name))
+        @transform(:Match = match.(Ref(pattern), :Name))
+        @transform(
+            :ethngrp = ByRow(m -> m !== nothing ? m["ethngrp"] : missing)(:Match),
+            :edu = ByRow(m -> m !== nothing ? m["edu"] : missing)(:Match)
+        )
+        @select(:ethngrp, :edu, $coef_colname, $se_colname)
+    end
+    
+    rename!(education_coefficients, [coef_colname, se_colname] .=> ["coefficient", "std_error"])
+    return education_coefficients
+end
+
+function calculate_combined_education_coefficients(model)
+    vcov_matrix = vcov(model)
+    coef_names = coefnames(model)
+    edu_levels = ["homo1", "homo2", "homo3", "heter1", "heter2"]
+    
+    baseline_coef = extract_baseline_ethnic_education(model)
+    edu_coef = extract_education_interactions(model)
+    
+    results = DataFrame(
+        ethngrp = String[],
+        edu = String[],
+        coefficient = Float64[],
+        std_error = Float64[]
+    )
+    
+    for row in eachrow(baseline_coef)
+        push!(results, (row.ethngrp, "heter1", row.coefficient, row.std_error))
+    end
+    
+    for minority in unique(baseline_coef.ethngrp)
+        base_idx = findfirst(x -> occursin("diag_aff: Inter_Han$minority", x), coef_names)
+        
+        if isnothing(base_idx)
+            continue
+        end
+        
+        for edu_row in eachrow(filter(r -> r.ethngrp == minority, edu_coef))
+            edu_term = "diag_aff: Inter_Han$(minority) & edu_diag_aff: $(edu_row.edu)"
+            edu_idx = findfirst(x -> x == edu_term, coef_names)
+            
+            if isnothing(edu_idx)
+                continue
+            end
+            
+            combined_coef = baseline_coef[baseline_coef.ethngrp .== minority, :coefficient][1] + 
+                          edu_row.coefficient
+            
+            combined_var = vcov_matrix[base_idx, base_idx] + 
+                         vcov_matrix[edu_idx, edu_idx] + 
+                         2 * vcov_matrix[base_idx, edu_idx]
+            combined_se = sqrt(combined_var)
+            
+            push!(results, (minority, edu_row.edu, combined_coef, combined_se))
+        end
+    end
+    
+    sort!(results, [:ethngrp, :edu])
+    results.edu = categorical(results.edu, levels=edu_levels)
+    
+    return results
+end
+
+function add_analysis_metrics!(results_df)
+    transform!(results_df,
+        [:coefficient, :std_error] =>
+        ByRow((coef, se) -> (
+            odds_ratio = exp(coef),
+            ci_lower = exp(coef - 1.96 * se),
+            ci_upper = exp(coef + 1.96 * se)
+        )) =>
+        [:odds_ratio, :ci_lower, :ci_upper]
+    )
+    return results_df
 end
 
 # Functions for testing gender asymmetry in interethnic marriages
