@@ -90,7 +90,7 @@ plt = draw!(
     f[1, 1],
     ethngrp_edu_comp_plt,
     scales(Color=(; palette=["#d7e1ee", "#a4a2a8", "#991f17"])),
-    axis=(; xticks=0:0.2:1)
+    axis=(; xticks=(0:0.2:1, ["0%", "20%", "40%", "60%", "80%", "100%"]))
 )
 
 legend!(f[1, 2], plt)

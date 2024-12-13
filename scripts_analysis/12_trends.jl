@@ -63,7 +63,10 @@ plt = draw!(
     f[1, 1],
     inter_ethngrp_plt,
     scales(Color=(; palette=["#b3bfd1", "#b04238"])),
-    axis=(; xticks=[1982, 1990, 2000, 2010])
+    axis=(;
+        xticks=[1982, 1990, 2000, 2010],
+        yticks=(0:0.2:0.8, ["0%", "20%", "40%", "60%", "80%"])
+    )
 )
 
 legend!(f[1, 2], plt)
@@ -122,8 +125,8 @@ plt = draw!(
     inter_by_edu_plt,
     scales(Color=(; palette=["#d7e1ee", "#a4a2a8", "#991f17"])),
     axis=(;
-        yticks=0:0.2:1,
-        limits=(nothing, (0, 1))
+        yticks=(0:0.2:1, ["0%", "20%", "40%", "60%", "80%", "100%"]),
+        limits = (nothing, (0, 1))
     )
 )
 
