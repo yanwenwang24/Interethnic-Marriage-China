@@ -248,5 +248,53 @@ end
 
 # 3.4 Gender asymmetry ------------------------------------------------------
 
-gender_asymmetry_df = analyze_all_minorities(count_df)
-println(gender_asymmetry_df)
+pooled_df, temporal_df = analyze_all_minorities(count_df)
+
+temporal_df[!, :year] = categorical(temporal_df[!, :year], levels=year_vector)
+temporal_df[!, :std_bar] = temporal_df[!, :std_error] * 1.96
+@subset!(temporal_df, :minority_group .!= "Kazakh" .&& :minority_group .!= "Uyghur")
+
+println(pooled_df)
+println(temporal_df)
+
+# Plot
+f = Figure(; size=(800, 600), fontsize=12)
+
+temporal_plt = data(temporal_df) * (
+    mapping(
+        :minority_group => "",
+        :coefficient => "Coefficient (Log Scale)",
+        :std_bar,
+        dodge_x=:year => "Year",
+        color=:year => "Year"
+    ) *
+    visual(Errorbars) +
+    mapping(
+        :minority_group => "",
+        :coefficient => "Coefficient (Log Scale)",
+        dodge_x=:year => "Year",
+        color=:year => "Year"
+    ) *
+    visual(Scatter)
+)
+
+hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
+
+plt = draw!(
+    f[1, 1],
+    temporal_plt + hlines_plt,
+    scales(
+        DodgeX=(; width=0.5),
+        Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
+    ),
+    axis=(;
+        yticks=-2:0.5:1,
+        limits=(nothing, (-2, 1))
+    )
+)
+
+legend!(f[1, 2], plt)
+
+f
+
+save("graphs/inter_odds_gender.png", f; px_per_unit=2)

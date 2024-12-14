@@ -264,5 +264,15 @@ end
 
 # 3.4 Gender asymmetry ------------------------------------------------------
 
-gender_asymmetry_df = analyze_all_minorities(count_df)
-println(gender_asymmetry_df)
+pooled_df, temporal_df = analyze_all_minorities(count_df)
+
+temporal_df[!, :year] = categorical(temporal_df[!, :year], levels=year_vector)
+temporal_df[!, :std_bar] = temporal_df[!, :std_error] * 1.96
+
+@subset!(pooled_df, :minority_group .== "Hui" .|| :minority_group .== "Southern")
+@subset!(temporal_df, :minority_group .== "Hui" .|| :minority_group .== "Southern")
+
+temporal_df_Huadong = @transform(temporal_df, :region = "East")
+
+println(pooled_df)
+println(temporal_df)
