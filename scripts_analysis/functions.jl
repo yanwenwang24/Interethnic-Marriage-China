@@ -210,14 +210,14 @@ function extract_baseline_ethnic_education(model)
     coef_df = DataFrame(coeftable(model))
     coef_colname = names(coef_df)[2]
     se_colname = names(coef_df)[3]
-    
+
     baseline_coefficients = @chain coef_df begin
         @subset(startswith.(:Name, "diag_aff: Inter_Han"))
         @subset(.!occursin.("edu", :Name))
         @transform(:ethngrp = replace.(:Name, "diag_aff: Inter_Han" => ""))
         @select(:ethngrp, $coef_colname, $se_colname)
     end
-    
+
     rename!(baseline_coefficients, [coef_colname, se_colname] .=> ["coefficient", "std_error"])
     return baseline_coefficients
 end
@@ -227,7 +227,7 @@ function extract_education_interactions(model)
     coef_colname = names(coef_df)[2]
     se_colname = names(coef_df)[3]
     pattern = r"^diag_aff: Inter_Han\s*(?<ethngrp>[\w\s\-]+).* & edu_diag_aff: \s*(?<edu>[\w\s\-]+)"
-    
+
     education_coefficients = @chain coef_df begin
         @subset(occursin.(r"^diag_aff: Inter_Han.* & edu_diag_aff.*", :Name))
         @transform(:Match = match.(Ref(pattern), :Name))
@@ -237,7 +237,7 @@ function extract_education_interactions(model)
         )
         @select(:ethngrp, :edu, $coef_colname, $se_colname)
     end
-    
+
     rename!(education_coefficients, [coef_colname, se_colname] .=> ["coefficient", "std_error"])
     return education_coefficients
 end
@@ -246,63 +246,63 @@ function calculate_combined_education_coefficients(model)
     vcov_matrix = vcov(model)
     coef_names = coefnames(model)
     edu_levels = ["homo1", "homo2", "homo3", "heter1", "heter2"]
-    
+
     baseline_coef = extract_baseline_ethnic_education(model)
     edu_coef = extract_education_interactions(model)
-    
+
     results = DataFrame(
-        ethngrp = String[],
-        edu = String[],
-        coefficient = Float64[],
-        std_error = Float64[]
+        ethngrp=String[],
+        edu=String[],
+        coefficient=Float64[],
+        std_error=Float64[]
     )
-    
+
     for row in eachrow(baseline_coef)
         push!(results, (row.ethngrp, "heter1", row.coefficient, row.std_error))
     end
-    
+
     for minority in unique(baseline_coef.ethngrp)
         base_idx = findfirst(x -> occursin("diag_aff: Inter_Han$minority", x), coef_names)
-        
+
         if isnothing(base_idx)
             continue
         end
-        
+
         for edu_row in eachrow(filter(r -> r.ethngrp == minority, edu_coef))
             edu_term = "diag_aff: Inter_Han$(minority) & edu_diag_aff: $(edu_row.edu)"
             edu_idx = findfirst(x -> x == edu_term, coef_names)
-            
+
             if isnothing(edu_idx)
                 continue
             end
-            
-            combined_coef = baseline_coef[baseline_coef.ethngrp .== minority, :coefficient][1] + 
-                          edu_row.coefficient
-            
-            combined_var = vcov_matrix[base_idx, base_idx] + 
-                         vcov_matrix[edu_idx, edu_idx] + 
-                         2 * vcov_matrix[base_idx, edu_idx]
+
+            combined_coef = baseline_coef[baseline_coef.ethngrp.==minority, :coefficient][1] +
+                            edu_row.coefficient
+
+            combined_var = vcov_matrix[base_idx, base_idx] +
+                           vcov_matrix[edu_idx, edu_idx] +
+                           2 * vcov_matrix[base_idx, edu_idx]
             combined_se = sqrt(combined_var)
-            
+
             push!(results, (minority, edu_row.edu, combined_coef, combined_se))
         end
     end
-    
+
     sort!(results, [:ethngrp, :edu])
     results.edu = categorical(results.edu, levels=edu_levels)
-    
+
     return results
 end
 
 function add_analysis_metrics!(results_df)
     transform!(results_df,
         [:coefficient, :std_error] =>
-        ByRow((coef, se) -> (
-            odds_ratio = exp(coef),
-            ci_lower = exp(coef - 1.96 * se),
-            ci_upper = exp(coef + 1.96 * se)
-        )) =>
-        [:odds_ratio, :ci_lower, :ci_upper]
+            ByRow((coef, se) -> (
+                odds_ratio=exp(coef),
+                ci_lower=exp(coef - 1.96 * se),
+                ci_upper=exp(coef + 1.96 * se)
+            )) =>
+                [:odds_ratio, :ci_lower, :ci_upper]
     )
     return results_df
 end
@@ -388,11 +388,124 @@ function analyze_gender_asymmetry(count_data::DataFrame, minority_group::String)
     )
 end
 
+function analyze_temporal_gender_asymmetry(count_data::DataFrame, minority_group::String)
+    analysis_data = @chain count_data begin
+        @transform(
+            :gender_inter = ifelse.(
+                (:ethngrp_f .== minority_group .&& :ethngrp_m .== "Han"),
+                string(minority_group, "(wif)"),
+                ifelse.(
+                    (:ethngrp_f .== "Han" .&& :ethngrp_m .== minority_group),
+                    string(minority_group, "(hus)"),
+                    "None"
+                )
+            )
+        )
+        @transform(:gender_inter = categorical(
+            :gender_inter,
+            levels=["None", string(minority_group, "(hus)"), string(minority_group, "(wif)")]
+        ))
+
+        @transform(:year = categorical(:year))
+    end
+
+    baseline_model = glm(
+        @formula(n ~ year * ethngrp_f + year * ethngrp_m + gender_inter),
+        analysis_data,
+        Poisson()
+    )
+
+    temporal_model = glm(
+        @formula(n ~ year * ethngrp_f + year * ethngrp_m + year * gender_inter),
+        analysis_data,
+        Poisson()
+    )
+
+    ll_difference = loglikelihood(temporal_model) - loglikelihood(baseline_model)
+    lr_statistic = 2 * ll_difference
+    df_difference = length(unique(analysis_data.year)) - 1
+    lr_p_value = 1 - cdf(Chisq(df_difference * 2), lr_statistic)
+
+    years = levels(analysis_data.year)
+    year_results = Dict{Int,Dict{String,Float64}}()
+
+    coef_names = coefnames(temporal_model)
+    coef_matrix = coef(temporal_model)
+    vcov_matrix = vcov(temporal_model)
+
+    hus_base = string(minority_group, "(hus)")
+    wif_base = string(minority_group, "(wif)")
+
+    hus_index = findfirst(x -> occursin(hus_base, x) && !occursin("year", x), coef_names)
+    wif_index = findfirst(x -> occursin(wif_base, x) && !occursin("year", x), coef_names)
+
+    if isnothing(hus_index) || isnothing(wif_index)
+        error("Could not find base coefficients for $minority_group")
+    end
+
+    for year in years
+        if year == first(years)
+            coefficient = coef_matrix[hus_index] - coef_matrix[wif_index]
+            pooled_se = sqrt(vcov_matrix[hus_index, hus_index] +
+                             vcov_matrix[wif_index, wif_index] -
+                             2 * vcov_matrix[hus_index, wif_index])
+        else
+            year_term = "year: $year"
+            hus_year_index = findfirst(x -> occursin(hus_base, x) && occursin(year_term, x), coef_names)
+            wif_year_index = findfirst(x -> occursin(wif_base, x) && occursin(year_term, x), coef_names)
+
+            if isnothing(hus_year_index) || isnothing(wif_year_index)
+                error("Could not find year-specific coefficients for $year")
+            end
+
+            coefficient = (coef_matrix[hus_index] + coef_matrix[hus_year_index]) -
+                          (coef_matrix[wif_index] + coef_matrix[wif_year_index])
+
+            var_terms = [
+                vcov_matrix[hus_index, hus_index],
+                vcov_matrix[hus_year_index, hus_year_index],
+                vcov_matrix[wif_index, wif_index],
+                vcov_matrix[wif_year_index, wif_year_index]
+            ]
+
+            covar_terms = [
+                2 * vcov_matrix[hus_index, hus_year_index],
+                -2 * vcov_matrix[hus_index, wif_index],
+                -2 * vcov_matrix[hus_index, wif_year_index],
+                -2 * vcov_matrix[hus_year_index, wif_index],
+                -2 * vcov_matrix[hus_year_index, wif_year_index],
+                2 * vcov_matrix[wif_index, wif_year_index]
+            ]
+
+            pooled_se = sqrt(sum(var_terms) + sum(covar_terms))
+        end
+
+        z_statistic = coefficient / pooled_se
+        p_value = 2 * (1 - cdf(Normal(), abs(z_statistic)))
+        odds_ratio = exp(coefficient)
+
+        year_results[year] = Dict(
+            "coefficient" => coefficient,
+            "std_error" => pooled_se,
+            "z_statistic" => z_statistic,
+            "p_value" => p_value,
+            "odds_ratio" => odds_ratio
+        )
+    end
+
+    return Dict(
+        "minority_group" => minority_group,
+        "year_specific_results" => year_results,
+        "lr_statistic" => lr_statistic,
+        "lr_p_value" => lr_p_value,
+        "lr_df" => df_difference * 2
+    )
+end
+
 function analyze_all_minorities(count_data::DataFrame)
     minority_groups = ethngrp_vector[ethngrp_vector.!="Han"]
 
-    # Initialize results with named columns
-    results = DataFrame(
+    pooled_results = DataFrame(
         minority_group=String[],
         coefficient=Float64[],
         std_error=Float64[],
@@ -403,33 +516,60 @@ function analyze_all_minorities(count_data::DataFrame)
         lr_p_value=Float64[]
     )
 
+    temporal_results = DataFrame(
+        minority_group=String[],
+        year=Int[],
+        coefficient=Float64[],
+        std_error=Float64[],
+        z_statistic=Float64[],
+        p_value=Float64[],
+        odds_ratio=Float64[],
+        model_lr_stat=Float64[],
+        model_lr_p=Float64[]
+    )
+
     for minority in minority_groups
         try
-            analysis = analyze_gender_asymmetry(count_data, minority)
+            pooled_analysis = analyze_gender_asymmetry(count_data, minority)
 
-            # Create a named tuple for insertion
-            row = (
-                minority_group=analysis["minority_group"],
-                coefficient=analysis["coefficient"],
-                std_error=analysis["std_error"],
-                z_statistic=analysis["z_statistic"],
-                wald_p_value=analysis["wald_p_value"],
-                odds_ratio=analysis["odds_ratio"],
-                lr_statistic=analysis["lr_statistic"],
-                lr_p_value=analysis["lr_p_value"]
+            pooled_row = (
+                minority_group=pooled_analysis["minority_group"],
+                coefficient=round(pooled_analysis["coefficient"], digits=3),
+                std_error=round(pooled_analysis["std_error"], digits=3),
+                z_statistic=round(pooled_analysis["z_statistic"], digits=3),
+                wald_p_value=round(pooled_analysis["wald_p_value"], digits=3),
+                odds_ratio=round(pooled_analysis["odds_ratio"], digits=3),
+                lr_statistic=round(pooled_analysis["lr_statistic"], digits=3),
+                lr_p_value=round(pooled_analysis["lr_p_value"], digits=3)
             )
+            push!(pooled_results, pooled_row)
 
-            push!(results, row)
+            temporal_analysis = analyze_temporal_gender_asymmetry(count_data, minority)
+
+            for (year, results) in temporal_analysis["year_specific_results"]
+                temporal_row = (
+                    minority_group=minority,
+                    year=year,
+                    coefficient=round(results["coefficient"], digits=3),
+                    std_error=round(results["std_error"], digits=3),
+                    z_statistic=round(results["z_statistic"], digits=3),
+                    p_value=round(results["p_value"], digits=3),
+                    odds_ratio=round(results["odds_ratio"], digits=3),
+                    model_lr_stat=round(temporal_analysis["lr_statistic"], digits=3),
+                    model_lr_p=round(temporal_analysis["lr_p_value"], digits=3)
+                )
+                push!(temporal_results, temporal_row)
+            end
 
         catch e
             println("Error analyzing $minority: ", e)
         end
     end
 
-    # Sort results by minority group
-    sort!(results, :minority_group)
+    sort!(pooled_results, :minority_group)
+    sort!(temporal_results, [:minority_group, :year])
 
-    return results
+    return pooled_results, temporal_results
 end
 
 # Exchange Index ---------------------------------------------------------
