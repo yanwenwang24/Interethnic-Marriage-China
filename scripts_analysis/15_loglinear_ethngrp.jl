@@ -224,8 +224,8 @@ plt = draw!(
         Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
     ),
     axis=(;
-        yticks=-12:2:2,
-        limits=(nothing, (-12, 1))
+        yticks=-13:2:2,
+        limits=(nothing, (-13, 1))
     )
 )
 
