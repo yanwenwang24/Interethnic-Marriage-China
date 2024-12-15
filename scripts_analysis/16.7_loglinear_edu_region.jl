@@ -56,8 +56,8 @@ plt = draw!(
         Color=(; palette=["#d7e1ee", "#bfcbdb", "#a4a2a8", "#c86558", "#991f17"])
     ),
     axis=(;
-        yticks=-10:2:2,
-        limits=(nothing, (-9, 1))
+        yticks=-8:2:2,
+        limits=(nothing, (-7, 1))
     )
 )
 
