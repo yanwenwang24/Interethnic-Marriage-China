@@ -209,48 +209,6 @@ end
 @subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Kazakh" .|| :ethngrp .== "Mongolian" .|| :ethngrp .== "Tibetan" .|| :ethngrp .== "Uyghur")
 odds_ratio_Xibei = @transform(odds_ratio_df, :region = "Northwest")
 
-# Plot
-f = Figure(; size=(800, 600), fontsize=12)
-
-odds_ratio_plt = data(odds_ratio_df) * (
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        :std_bar,
-        dodge_x=:year => "Year",
-        color=:year => "Year"
-    ) *
-    visual(Errorbars) +
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        dodge_x=:year => "Year",
-        color=:year => "Year"
-    ) *
-    visual(Scatter)
-)
-
-hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
-
-plt = draw!(
-    f[1, 1],
-    odds_ratio_plt + hlines_plt,
-    scales(
-        DodgeX=(; width=0.5),
-        Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
-    ),
-    axis=(;
-        yticks=-12:2:2,
-        limits=(nothing, (-12, 1))
-    )
-)
-
-legend!(f[1, 2], plt)
-
-f
-
-save("graphs/inter_odds_ethngrp_Xibei.png", f; px_per_unit=2)
-
 # Expotentiate coefficients
 @chain odds_ratio_df begin
     @transform(:ratio = round.(exp.(:coefficient) * 1000, digits=2))

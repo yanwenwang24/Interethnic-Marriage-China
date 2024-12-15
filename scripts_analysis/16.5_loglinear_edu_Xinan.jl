@@ -231,50 +231,6 @@ end
 @subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern" .|| :ethngrp .== "Tibetan")
 odds_ratio_Xinan = @transform(odds_ratio_df, :region = "Southwest")
 
-# Plot
-f = Figure(; size=(800, 600), fontsize = 12)
-
-odds_ratio_plt = data(
-    @subset(odds_ratio_df, :ethngrp .!= "Kazakh" .&& :ethngrp .!= "Uyghur")
-    ) * (
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        :std_bar,
-        dodge_x = :edu => "Education",
-        color=:edu => "Education"
-    ) *
-    visual(Errorbars) +
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        dodge_x = :edu => "Education",
-        color=:edu => "Education"
-    ) *
-    visual(Scatter)
-)
-
-hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
-
-plt = draw!(
-    f[1, 1],
-    odds_ratio_plt + hlines_plt,
-    scales(
-        DodgeX = (; width = 0.5),
-        Color=(; palette=["#d7e1ee", "#bfcbdb", "#a4a2a8", "#c86558", "#991f17"])
-    ),
-    axis=(;
-        yticks=-10:2:2,
-        limits=(nothing, (-9, 1))
-    )
-)
-
-legend!(f[1, 2], plt)
-
-f
-
-save("graphs/inter_odds_edu_Xinan.png", f; px_per_unit=2)
-
 # Expotentiate the coefficients
 @chain odds_ratio_df begin
     @transform(:ratio = round.(exp.(:coefficient) * 1000, digits=2))
