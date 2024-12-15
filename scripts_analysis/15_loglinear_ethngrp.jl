@@ -250,7 +250,11 @@ end
 
 pooled_df, temporal_df = analyze_all_minorities(count_df)
 
+pooled_df[!, :minority_group] = categorical(pooled_df[!, :minority_group])
+pooled_df[!, :std_bar] = pooled_df[!, :std_error] * 1.96
+
 temporal_df[!, :year] = categorical(temporal_df[!, :year], levels=year_vector)
+temporal_df[!, :minority_group] = categorical(temporal_df[!, :minority_group])
 temporal_df[!, :std_bar] = temporal_df[!, :std_error] * 1.96
 @subset!(temporal_df, :minority_group .!= "Kazakh" .&& :minority_group .!= "Uyghur")
 
@@ -258,8 +262,37 @@ println(pooled_df)
 println(temporal_df)
 
 # Plot
-f = Figure(; size=(800, 600), fontsize=12)
+f = Figure(; size=(1200, 800), fontsize=12)
 
+# Create main grid layout
+gl = f[1, 1] = GridLayout()
+
+# Horizontal lines
+hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
+
+# Left panel: Aggregated pattern
+agg_plt = data(pooled_df) * (
+    mapping(
+        :minority_group => "",
+        :coefficient => "Coefficient (Log Scale)",
+        :std_bar
+    ) * visual(Errorbars) +
+    mapping(
+        :minority_group => "",
+        :coefficient => "Coefficient (Log Scale)"
+    ) * visual(Scatter)
+)
+
+ax_agg = Axis(gl[1, 1];
+    title = "A. Overall Pattern",
+    yticks = -2:0.5:1,
+    limits = (nothing, (-2, 1)),
+    xticks = (1:8, unique(pooled_df.minority_group))
+)
+
+draw!(ax_agg, agg_plt + hlines_plt)
+
+# Right panel: Temporal pattern
 temporal_plt = data(temporal_df) * (
     mapping(
         :minority_group => "",
@@ -278,22 +311,31 @@ temporal_plt = data(temporal_df) * (
     visual(Scatter)
 )
 
-hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
+ax_temporal = Axis(gl[1, 2];
+    title = "B. Temporal Pattern",
+    yticks = -2:0.5:1,
+    limits = (nothing, (-2, 1)),
+    xticks = (1:6, unique(temporal_df.minority_group))
+)
 
-plt = draw!(
-    f[1, 1],
+plt = draw!(ax_temporal, 
     temporal_plt + hlines_plt,
     scales(
         DodgeX=(; width=0.5),
         Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
-    ),
-    axis=(;
-        yticks=-2:0.5:1,
-        limits=(nothing, (-2, 1))
     )
 )
 
-legend!(f[1, 2], plt)
+# Add column for legend
+ax_legend = gl[1, 3] = GridLayout()
+
+# Set relative sizes
+colsize!(gl, 1, Relative(0.40))
+colsize!(gl, 2, Relative(0.55))
+colsize!(gl, 3, Relative(0.05))
+
+# Add legend
+legend!(ax_legend[1, 1], plt)
 
 f
 
