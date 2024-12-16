@@ -17,6 +17,8 @@
 # Combine cleaned data
 census = vcat(census_1982, census_1990, census_2000, census_2010)
 
+@transform!(census, :birthy_sp = :year - :age_sp)
+
 # 2 Construct variables ---------------------------------------------------
 
 # 2.1 Ethnic pairing ------------------------------------------------------
