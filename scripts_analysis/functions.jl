@@ -12,6 +12,53 @@
 ##
 ## ------------------------------------------------------------------------
 
+# Sample restriction ------------------------------------------------------
+
+# Function for restricting the sample
+function restrict_sample(df::DataFrame)
+    initial_size = size(df, 1)
+    println("Initial sample size: ", initial_size)
+    
+    sample = df
+    
+    # Step 1: Filter by sex
+    sample = filter(:female => x -> x == 1, sample)
+    size_step1 = size(sample, 1)
+    dropped_step1 = initial_size - size_step1
+    percent_dropped_step1 = round(dropped_step1 / initial_size * 100, digits=2)
+    println("Step 1: Filter by sex (female == 1), size: ", size_step1, ", dropped: ", dropped_step1, " (", percent_dropped_step1, "%)")
+    
+    # Step 2: Filter by age
+    sample = filter(row -> !ismissing(row.age) && row.age >= 25 && row.age <= 34, sample)
+    size_step2 = size(sample, 1)
+    dropped_step2 = size_step1 - size_step2
+    percent_dropped_step2 = round(dropped_step2 / size_step1 * 100, digits=2)
+    println("Step 2: Filter by age (25 <= age <= 34), size: ", size_step2, ", dropped: ", dropped_step2, " (", percent_dropped_step2, "%)")
+    
+    # Step 3: Filter by marital status
+    sample = filter(:marst => x -> x == "married", sample)
+    size_step3 = size(sample, 1)
+    dropped_step3 = size_step2 - size_step3
+    percent_dropped_step3 = round(dropped_step3 / size_step2 * 100, digits=2)
+    println("Step 3: Filter by marital status (marst == \"married\"), size: ", size_step3, ", dropped: ", dropped_step3, " (", percent_dropped_step3, "%)")
+    
+    # Step 4: Filter by ethnicity
+    sample = filter(row -> !ismissing(row.ethnicity) && !ismissing(row.ethnicity_sp), sample)
+    size_step4 = size(sample, 1)
+    dropped_step4 = size_step3 - size_step4
+    percent_dropped_step4 = round(dropped_step4 / size_step3 * 100, digits=2)
+    println("Step 4: Filter by ethnicity (not missing), size: ", size_step4, ", dropped: ", dropped_step4, " (", percent_dropped_step4, "%)")
+    
+    # Step 5: Filter by education
+    sample = filter(row -> !ismissing(row.edu) && !ismissing(row.edu_sp), sample)
+    size_step5 = size(sample, 1)
+    dropped_step5 = size_step4 - size_step5
+    percent_dropped_step5 = round(dropped_step5 / size_step4 * 100, digits=2)
+    println("Step 5: Filter by education (not missing), size: ", size_step5, ", dropped: ", dropped_step5, "%)")
+    
+    return sample
+end
+
 # Decomposition -----------------------------------------------------------
 
 # Function to decompose differences
