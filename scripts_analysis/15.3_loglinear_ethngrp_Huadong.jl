@@ -230,7 +230,8 @@ temporal_df[!, :std_bar] = temporal_df[!, :std_error] * 1.96
 @subset!(pooled_df, :minority_group .== "Hui" .|| :minority_group .== "Southern")
 @subset!(temporal_df, :minority_group .== "Hui" .|| :minority_group .== "Southern")
 
+pooled_df_Huadong = @transform(pooled_df, :region = "East")
 temporal_df_Huadong = @transform(temporal_df, :region = "East")
 
-println(pooled_df)
-println(temporal_df)
+println(pooled_df_Huadong)
+println(temporal_df_Huadong)
