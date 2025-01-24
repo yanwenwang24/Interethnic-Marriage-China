@@ -14,15 +14,18 @@
 
 # Sample restriction ------------------------------------------------------
 
-# Function for restricting the sample
-# Define a struct for filter steps
+"""
+    restrict_sample!(df::DataFrame)
+
+Restricts the sample based on predefined filter steps for gender, age, marital status, ethnicity, and education.
+Returns the filtered DataFrame with printed statistics for each filter step.
+"""
 struct FilterStep
     name::String
     filter_fn::Function
     description::String
 end
 
-# Function for restricting the sample
 function restrict_sample!(df::DataFrame)
     initial_size = size(df, 1)
     println("Initial sample size: ", initial_size)
@@ -96,9 +99,12 @@ function restrict_sample!(df::DataFrame)
     return current_sample
 end
 
-# Decomposition -----------------------------------------------------------
+"""
+    decompose(mat_a, mat_b, outcome="off")
 
-# Function to decompose differences
+Decomposes differences between two matrices into margin and odds ratio effects.
+Returns a vector containing [r2, diff_total, diff_margin, diff_oddratio].
+"""
 function decompose(mat_a, mat_b, outcome="off")
     # Create counterfactual matrices
     Z1 = create_new_matrix(mat_a, mat_b)[1]
@@ -119,7 +125,12 @@ function decompose(mat_a, mat_b, outcome="off")
     return [r2, diff_total, diff_margin, diff_oddratio]
 end
 
-# Function to calculate proportion on, off, below, or above the diagonal
+"""
+    calculate_interrates(mat, outcome="off")
+
+Calculates proportion on, off, below, or above the diagonal of a matrix.
+Returns the calculated proportion based on the specified outcome type.
+"""
 function calculate_interrates(mat, outcome="off")
     # Convert counts to proportions
     mat_prop = mat / sum(mat)
@@ -138,7 +149,12 @@ function calculate_interrates(mat, outcome="off")
     return interrates
 end
 
-# Function for creating counterfactual matrix using IPF
+"""
+    create_new_matrix(mat_a, mat_b)
+
+Creates counterfactual matrices using IPF (Iterative Proportional Fitting).
+Returns two counterfactual matrices (Z1, Z2).
+"""
 function create_new_matrix(mat_a, mat_b)
 
     # Row and column margins, and total for matrix a
@@ -177,7 +193,12 @@ function create_new_matrix(mat_a, mat_b)
     return Z1, Z2
 end
 
-# Function to get goodness-of-fit statistics
+"""
+    goodness_of_fit(model, model_name::String)
+
+Calculates goodness-of-fit statistics for a given model.
+Returns a DataFrame with model fit statistics including degrees of freedom, deviance, index of dissimilarity, and BIC.
+"""
 function goodness_of_fit(model, model_name::String)
     return DataFrame(
         mod=model_name,
@@ -188,9 +209,12 @@ function goodness_of_fit(model, model_name::String)
     )
 end
 
-# Log-linear models ------------------------------------------------------
+"""
+    extract_baseline_coefficients(model)
 
-# Functions for extracting coefficients from log-linear models on ethnicity
+Extracts baseline coefficients for Han-minority marriages from a log-linear model.
+Returns a DataFrame containing coefficients and standard errors.
+"""
 function extract_baseline_coefficients(model)
     # Get coefficient table and identify actual column names
     coef_df = DataFrame(coeftable(model))
@@ -209,6 +233,12 @@ function extract_baseline_coefficients(model)
     return baseline_coefficients
 end
 
+"""
+    extract_year_interactions(model)
+
+Extracts year interaction coefficients from a log-linear model.
+Returns a DataFrame containing coefficients and standard errors for year interactions.
+"""
 function extract_year_interactions(model)
     coef_df = DataFrame(coeftable(model))
     coef_colname = names(coef_df)[2]
@@ -230,6 +260,12 @@ function extract_year_interactions(model)
     return year_coefficients
 end
 
+"""
+    calculate_combined_coefficients(model, base_year=1982)
+
+Calculates combined coefficients and their standard errors from a log-linear model.
+Returns a DataFrame with coefficients and standard errors for each ethnicity-year combination.
+"""
 function calculate_combined_coefficients(model, base_year=1982)
     # Get variance-covariance matrix
     vcov_matrix = vcov(model)
@@ -289,7 +325,12 @@ function calculate_combined_coefficients(model, base_year=1982)
     return results
 end
 
-# Functions for extracting coefficients from log-linear models on ethnicity and eduction
+"""
+    extract_baseline_ethnic_education(model)
+
+Extracts baseline coefficients for Han-minority marriages from a log-linear model with education interactions.
+Returns a DataFrame containing coefficients and standard errors for baseline ethnic education effects.
+"""
 function extract_baseline_ethnic_education(model)
     coef_df = DataFrame(coeftable(model))
     coef_colname = names(coef_df)[2]
@@ -306,6 +347,12 @@ function extract_baseline_ethnic_education(model)
     return baseline_coefficients
 end
 
+"""
+    extract_education_interactions(model)
+
+Extracts education interaction coefficients from a log-linear model for Han-minority marriages.
+Returns a DataFrame containing coefficients and standard errors for education-specific interaction effects.
+"""
 function extract_education_interactions(model)
     coef_df = DataFrame(coeftable(model))
     coef_colname = names(coef_df)[2]
@@ -326,6 +373,13 @@ function extract_education_interactions(model)
     return education_coefficients
 end
 
+"""
+    calculate_combined_education_coefficients(model)
+
+Calculates combined coefficients and their standard errors from a log-linear model with education interactions.
+Returns a DataFrame with coefficients and standard errors for each ethnicity-education combination, 
+considering both baseline and education-specific effects.
+"""
 function calculate_combined_education_coefficients(model)
     vcov_matrix = vcov(model)
     coef_names = coefnames(model)
@@ -378,6 +432,12 @@ function calculate_combined_education_coefficients(model)
     return results
 end
 
+"""
+    add_analysis_metrics!(results_df)
+
+Adds odds ratios and confidence intervals to the results DataFrame.
+Returns the modified DataFrame with additional metrics.
+"""
 function add_analysis_metrics!(results_df)
     transform!(results_df,
         [:coefficient, :std_error] =>
@@ -391,7 +451,12 @@ function add_analysis_metrics!(results_df)
     return results_df
 end
 
-# Functions for testing gender asymmetry in interethnic marriages
+"""
+    analyze_gender_asymmetry(count_data::DataFrame, minority_group::String)
+
+Analyzes gender asymmetry in interethnic marriages for a specific minority group.
+Returns a dictionary containing statistical measures of gender asymmetry.
+"""
 function analyze_gender_asymmetry(count_data::DataFrame, minority_group::String)
     analysis_data = @chain count_data begin
         # Create baseline intermarriage indicator
@@ -472,6 +537,12 @@ function analyze_gender_asymmetry(count_data::DataFrame, minority_group::String)
     )
 end
 
+"""
+    analyze_temporal_gender_asymmetry(count_data::DataFrame, minority_group::String)
+
+Analyzes temporal changes in gender asymmetry for a specific minority group.
+Returns a dictionary containing year-specific results and likelihood ratio test statistics.
+"""
 function analyze_temporal_gender_asymmetry(count_data::DataFrame, minority_group::String)
     analysis_data = @chain count_data begin
         @transform(
@@ -586,6 +657,12 @@ function analyze_temporal_gender_asymmetry(count_data::DataFrame, minority_group
     )
 end
 
+"""
+    analyze_all_minorities(count_data::DataFrame)
+
+Analyzes gender asymmetry for all minority groups, both pooled and temporal.
+Returns two DataFrames containing pooled and temporal results for all minority groups.
+"""
 function analyze_all_minorities(count_data::DataFrame)
     minority_groups = ethngrp_vector[ethngrp_vector.!="Han"]
 
@@ -655,8 +732,6 @@ function analyze_all_minorities(count_data::DataFrame)
 
     return pooled_results, temporal_results
 end
-
-# Exchange Index ---------------------------------------------------------
 
 """
     equalize_distribution(df, treated_col)
@@ -789,7 +864,12 @@ function retrieve_sample(i, minority_who="wif"; balance_distribution=false)
     return hus_df, wif_df
 end
 
-# Function for performing full exact matching
+"""
+    matchit(hus_df, wif_df)
+
+Performs full exact matching from both husband's and wife's perspectives.
+Returns two matched DataFrames for husband and wife perspectives.
+"""
 function matchit(hus_df, wif_df)
     # Perform full exact matching from husband's perspective
     R"match_hus <- matchit(D ~ percentile_sp + birthy_sp, data = $hus_df, method = 'exact')"
@@ -804,7 +884,12 @@ function matchit(hus_df, wif_df)
     return matched_hus_df, matched_wif_df
 end
 
-# Function for calculating the Exchange Index
+"""
+    calculate_EI(df)
+
+Calculates the Exchange Index based on educational percentiles.
+Returns a vector containing [hus_inter, hus_intra, wif_inter, wif_intra].
+"""
 function calculate_EI(df)
     # From husband's perspective
     # Husband's educational percentile when D == 1
@@ -832,7 +917,12 @@ function calculate_EI(df)
     return EI_vector
 end
 
-# Functino for extracting p value of the Exchange Index
+"""
+    extract_p(df)
+
+Extracts p-value for the Exchange Index from linear models.
+Returns the minimum p-value from husband's and wife's perspectives.
+"""
 function extract_p(df)
     # From husband's perspective, comparing wife's educational percentile
     model_hus = lm(@formula(percentile ~ D), df, wts=df[!, :weights])
@@ -847,12 +937,22 @@ function extract_p(df)
     return p_value
 end
 
-# Get individual ethnicities from ethnic groups
+"""
+    get_ethnicities_by_group(dict, target_group)
+
+Retrieves individual ethnicities belonging to a specific ethnic group.
+Returns an array of ethnicities in the target group.
+"""
 function get_ethnicities_by_group(dict, target_group)
     return [key for (key, value) in dict if value == target_group]
 end
 
-# Function to filter DataFrame by ethnic group
+"""
+    filter_by_ethnic_group(df, dict, target_group)
+
+Filters DataFrame rows based on ethnicities in a specific ethnic group.
+Returns the filtered DataFrame containing only rows with ethnicities in the target group.
+"""
 function filter_by_ethnic_group(df, dict, target_group)
     target_ethnicities = get_ethnicities_by_group(dict, target_group)
     return filter(row -> row.ethngrp in target_ethnicities, df)
