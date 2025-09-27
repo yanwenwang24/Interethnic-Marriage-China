@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 18.5_exchange_index_ethngrp_Xinan.jl
 ## Purpose: Analyze status exchange using the Exchagne Index
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10
@@ -17,10 +16,10 @@
 
 # 1 Education Ranks -------------------------------------------------------
 
-# 1.1 Reference sample_Xinan ----------------------------------------------------
+# 1.1 Reference sample_Dongbei ----------------------------------------------------
 
 ref_women = @chain census begin
-    @subset(:region .== "Xinan")
+    @subset(:region .== "Dongbei")
     @subset(:female .== 1)
     @subset(ismissing.(:eduraw) .== false)
     @subset(ismissing.(:age) .== false)
@@ -28,27 +27,27 @@ ref_women = @chain census begin
 end
 
 ref_men = @chain census begin
-    @subset(:region .== "Xinan")
+    @subset(:region .== "Dongbei")
     @subset(:female .== 0)
     @subset(ismissing.(:eduraw) .== false)
     @subset(ismissing.(:age) .== false)
     @select(:birthy, :eduraw)
 end
 
-sample_Xinan = @chain sample begin
-    @subset(:region .== "Xinan")
+sample_Dongbei = @chain sample begin
+    @subset(:region .== "Dongbei")
 end
 
 # 1.2 Women's education ranks ----------------------------------------------
 
-birthy_vector = sort(unique(sample_Xinan[!, :birthy]))
+birthy_vector = sort(unique(sample_Dongbei[!, :birthy]))
 
 # Create an empty DataFrame
 edu_rank_df = DataFrame(birthy = Int[], eduraw = Int[], percentile = Float64[])
 
 # Identify educational rankings by gender and 11-year moving cohorts
 for i in birthy_vector
-    # Select sample_Xinans within 11-year moving cohorts
+    # Select sample_Dongbeis within 11-year moving cohorts
     df = @subset(ref_women, :birthy .>= i - 5 .&& :birthy .<= i + 5)
     
     # Calculate education rankings and percentiles
@@ -66,14 +65,14 @@ edu_rank_df_women = edu_rank_df
 
 # 1.3 Men's education ranks -----------------------------------------------
 
-birthy_vector = sort(unique(sample_Xinan[!, :birthy_sp]))
+birthy_vector = sort(unique(sample_Dongbei[!, :birthy_sp]))
 
 # Create an empty DataFrame
 edu_rank_df = DataFrame(birthy = Int[], eduraw = Int[], percentile = Float64[])
 
 # Identify educational rankings by gender and 11-year moving cohorts
 for i in birthy_vector
-    # Select sample_Xinans within 11-year moving cohorts
+    # Select sample_Dongbeis within 11-year moving cohorts
     df = @subset(ref_men, :birthy .>= i - 5 .&& :birthy .<= i + 5)
     
     # Calculate education rankings and percentiles
@@ -96,8 +95,8 @@ edu_rank_df_men = @chain edu_rank_df_men begin
     )
 end
 
-# Join to the sample_Xinan
-sample_EI = @chain sample_Xinan begin
+# Join to the sample_Dongbei
+sample_EI = @chain sample_Dongbei begin
     @select(
         :year, :birthy, :birthy_sp,
         :ethngrp, :ethngrp_sp, :ethngrp_f, :ethngrp_m,
@@ -109,7 +108,7 @@ end
 
 # 2 Matching --------------------------------------------------------------
 
-ethngrp_vector = ["Hui", "Southern", "Tibetan"]
+ethngrp_vector = ["Hui", "Manchu", "Mongolian", "Korean"]
 
 # 2.1 Han husband minority wife -------------------------------------------
 
@@ -124,9 +123,9 @@ EI_df = DataFrame(
 )
 
 for i in ethngrp_vector
-    # Retrieve sample_Xinan
+    # Retrieve sample_Dongbei
     hus_df, wif_df = retrieve_sample(i, "wif")
-    # Match sample_Xinans
+    # Match sample_Dongbeis
     matched_hus_df, matched_wif_df = matchit(hus_df, wif_df)
     # Calculate EI
     EI_hus = calculate_EI(matched_hus_df)
@@ -157,9 +156,9 @@ EI_df = DataFrame(
 )
 
 for i in ethngrp_vector
-    # Retrieve sample_Xinan
+    # Retrieve sample_Dongbei
     hus_df, wif_df = retrieve_sample(i, "hus")
-    # Match sample_Xinans
+    # Match sample_Dongbeis
     matched_hus_df, matched_wif_df = matchit(hus_df, wif_df)
     # Calculate EI
     EI_hus = calculate_EI(matched_hus_df)
@@ -218,5 +217,5 @@ end
 println(EI_df)
 println(EI_df_short)
 
-EI_df_Xinan = @transform(EI_df, :region = "Southwest")
-EI_df_short_Xinan = @transform(EI_df_short, :region = "Southwest")
+EI_df_Dongbei = @transform(EI_df, :region = "Northeast")
+EI_df_short_Dongbei = @transform(EI_df_short, :region = "Northeast")

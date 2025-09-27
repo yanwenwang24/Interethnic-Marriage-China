@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 16.2_loglinear_edu_Dongbei.jl
 ## Purpose: Use log-linear models to analyze ethnic and educational mating
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10
@@ -14,15 +13,15 @@
 
 # 1 Contingency table -----------------------------------------------------
 
-# Select region Dongbei
-sample_Dongbei = @chain sample begin
-    @subset(:region .== "Dongbei")
+# Select region Xibei
+sample_Xibei = @chain sample begin
+    @subset(:region .== "Xibei")
 end
 
 # Create a full combination of ethnic and educational pairings
-year_vector = unique(sample_Dongbei.year)
-ethngrp_vector = unique(sample_Dongbei.ethngrp_f)
-edu_vector = unique(sample_Dongbei.edu_f)
+year_vector = unique(sample_Xibei.year)
+ethngrp_vector = unique(sample_Xibei.ethngrp_f)
+edu_vector = unique(sample_Xibei.edu_f)
 
 ethngrp_edu_comb = DataFrame(
     year=[a for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector],
@@ -32,7 +31,7 @@ ethngrp_edu_comb = DataFrame(
     edu_m=[e for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector]
 )
 
-count_df = @chain sample_Dongbei begin
+count_df = @chain sample_Xibei begin
     @groupby(:year, :ethngrp_m, :ethngrp_f, :edu_f, :edu_m)
     @combine(:n = length(:ethngrp_m))
     # fill missing combinations with 0
@@ -222,14 +221,14 @@ odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
 # Select ethnic groups with significant presence
 @chain sample begin
-    @subset(:region .== "Dongbei")
+    @subset(:region .== "Xibei")
     @groupby(:ethngrp_f)
     @combine(:n = length(:ethngrp_f))
     @subset(:n .> 500)
 end
 
-@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Manchu" .|| :ethngrp .== "Mongolian" .|| :ethngrp .== "Korean")
-odds_ratio_Dongbei = @transform(odds_ratio_df, :region = "Northeast")
+@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Mongolian"  .|| :ethngrp .== "Tibetan")
+odds_ratio_Xibei = @transform(odds_ratio_df, :region = "Northwest")
 
 # Expotentiate the coefficients
 @chain odds_ratio_df begin

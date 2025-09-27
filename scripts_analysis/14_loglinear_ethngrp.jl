@@ -1,9 +1,8 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 15.3_loglinear_ethngrp_Huadong.jl
-## Purpose: Use log-linear models to analyze interethnic marriage in Huadong
+## Purpose: Use log-linear models to analyze interethnic marriage.
 ## Author: Yanwen Wang
-## Date Created: 2024-11-06
+## Date Created: 2024-10-07
 ## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
@@ -14,14 +13,9 @@
 
 # 1 Contingency table -----------------------------------------------------
 
-# Select region Huadong
-sample_Huadong = @chain sample begin
-    @subset(:region .== "Huadong")
-end
-
 # Create a full combination of ethnic pairings
-year_vector = unique(sample_Huadong.year)
-ethngrp_vector = unique(sample_Huadong.ethngrp_f)
+year_vector = unique(sample.year)
+ethngrp_vector = unique(sample.ethngrp_f)
 
 ethngrp_comb = DataFrame(
     year=[x for x in year_vector for y in ethngrp_vector for z in ethngrp_vector],
@@ -29,7 +23,7 @@ ethngrp_comb = DataFrame(
     ethngrp_m=[z for x in year_vector for y in ethngrp_vector for z in ethngrp_vector]
 )
 
-count_df = @chain sample_Huadong begin
+count_df = @chain sample begin
     @groupby(:year, :ethngrp_m, :ethngrp_f)
     @combine(:n = length(:ethngrp_f))
     @orderby(:year, :ethngrp_m, :ethngrp_f)
@@ -37,6 +31,13 @@ count_df = @chain sample_Huadong begin
     leftjoin(ethngrp_comb, _, on=[:year, :ethngrp_m, :ethngrp_f])
     @transform(:n = coalesce.(:n, 0))
 end
+
+num_small_groups = @chain count_df begin
+    @subset(:n .< 30) # Filter rows where n is less than 30
+    nrow
+end
+
+println("Number of rows with n < 30: ", num_small_groups)
 
 # 2 Parameters ------------------------------------------------------------
 
@@ -198,16 +199,47 @@ println(gof_df)
 odds_ratio_df = calculate_combined_coefficients(M2d)
 odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
-# Select ethnic groups with significant presence
-@chain sample begin
-    @subset(:region .== "Huadong")
-    @groupby(:ethngrp_f)
-    @combine(:n = length(:ethngrp_f))
-    @subset(:n .> 500)
-end
+# Plot
+f = Figure(; size=(800, 600), fontsize=12)
 
-@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern")
-odds_ratio_Huadong = @transform(odds_ratio_df, :region = "East")
+odds_ratio_plt = data(odds_ratio_df) * (
+    mapping(
+        :ethngrp => "",
+        :coefficient => "Coefficient (Log Scale)",
+        :std_bar,
+        dodge_x=:year => "Year",
+        color=:year => "Year"
+    ) *
+    visual(Errorbars) +
+    mapping(
+        :ethngrp => "",
+        :coefficient => "Coefficient (Log Scale)",
+        dodge_x=:year => "Year",
+        color=:year => "Year"
+    ) *
+    visual(Scatter)
+)
+
+hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
+
+plt = draw!(
+    f[1, 1],
+    odds_ratio_plt + hlines_plt,
+    scales(
+        DodgeX=(; width=0.5),
+        Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
+    ),
+    axis=(;
+        yticks=-13:2:2,
+        limits=(nothing, (-13, 1))
+    )
+)
+
+legend!(f[1, 2], plt)
+
+f
+
+save("figures/odds_by_ethngrp.png", f; px_per_unit=2)
 
 # Expotentiate coefficients
 @chain odds_ratio_df begin
@@ -219,19 +251,3 @@ odds_ratio_Huadong = @transform(odds_ratio_df, :region = "East")
     @select(:ethngrp, :year, :coefficient, :std_error, :ratio)
     println()
 end
-
-# 3.4 Gender asymmetry ------------------------------------------------------
-
-pooled_df, temporal_df = analyze_all_minorities(count_df)
-
-temporal_df[!, :year] = categorical(temporal_df[!, :year], levels=year_vector)
-temporal_df[!, :std_bar] = temporal_df[!, :std_error] * 1.96
-
-@subset!(pooled_df, :minority_group .== "Hui" .|| :minority_group .== "Southern")
-@subset!(temporal_df, :minority_group .== "Hui" .|| :minority_group .== "Southern")
-
-pooled_df_Huadong = @transform(pooled_df, :region = "East")
-temporal_df_Huadong = @transform(temporal_df, :region = "East")
-
-println(pooled_df_Huadong)
-println(temporal_df_Huadong)

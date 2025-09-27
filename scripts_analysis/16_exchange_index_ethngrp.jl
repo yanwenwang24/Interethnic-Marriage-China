@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 18.4_exchange_index_ethngrp_Zhongnan.jl
 ## Purpose: Analyze status exchange using the Exchagne Index
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10
@@ -17,10 +16,9 @@
 
 # 1 Education Ranks -------------------------------------------------------
 
-# 1.1 Reference sample_Zhongnan ----------------------------------------------------
+# 1.1 Reference sample ----------------------------------------------------
 
 ref_women = @chain census begin
-    @subset(:region .== "Zhongnan")
     @subset(:female .== 1)
     @subset(ismissing.(:eduraw) .== false)
     @subset(ismissing.(:age) .== false)
@@ -28,27 +26,22 @@ ref_women = @chain census begin
 end
 
 ref_men = @chain census begin
-    @subset(:region .== "Zhongnan")
     @subset(:female .== 0)
     @subset(ismissing.(:eduraw) .== false)
     @subset(ismissing.(:age) .== false)
     @select(:birthy, :eduraw)
 end
 
-sample_Zhongnan = @chain sample begin
-    @subset(:region .== "Zhongnan")
-end
-
 # 1.2 Women's education ranks ----------------------------------------------
 
-birthy_vector = sort(unique(sample_Zhongnan[!, :birthy]))
+birthy_vector = sort(unique(sample[!, :birthy]))
 
 # Create an empty DataFrame
 edu_rank_df = DataFrame(birthy = Int[], eduraw = Int[], percentile = Float64[])
 
 # Identify educational rankings by gender and 11-year moving cohorts
 for i in birthy_vector
-    # Select sample_Zhongnans within 11-year moving cohorts
+    # Select samples within 11-year moving cohorts
     df = @subset(ref_women, :birthy .>= i - 5 .&& :birthy .<= i + 5)
     
     # Calculate education rankings and percentiles
@@ -66,14 +59,14 @@ edu_rank_df_women = edu_rank_df
 
 # 1.3 Men's education ranks -----------------------------------------------
 
-birthy_vector = sort(unique(sample_Zhongnan[!, :birthy_sp]))
+birthy_vector = sort(unique(sample[!, :birthy_sp]))
 
 # Create an empty DataFrame
 edu_rank_df = DataFrame(birthy = Int[], eduraw = Int[], percentile = Float64[])
 
 # Identify educational rankings by gender and 11-year moving cohorts
 for i in birthy_vector
-    # Select sample_Zhongnans within 11-year moving cohorts
+    # Select samples within 11-year moving cohorts
     df = @subset(ref_men, :birthy .>= i - 5 .&& :birthy .<= i + 5)
     
     # Calculate education rankings and percentiles
@@ -96,8 +89,8 @@ edu_rank_df_men = @chain edu_rank_df_men begin
     )
 end
 
-# Join to the sample_Zhongnan
-sample_EI = @chain sample_Zhongnan begin
+# Join to the sample
+sample_EI = @chain sample begin
     @select(
         :year, :birthy, :birthy_sp,
         :ethngrp, :ethngrp_sp, :ethngrp_f, :ethngrp_m,
@@ -109,7 +102,7 @@ end
 
 # 2 Matching --------------------------------------------------------------
 
-ethngrp_vector = ["Hui", "Southern"]
+ethngrp_vector = ["Hui", "Korean", "Manchu", "Mongolian", "Southern", "Tibetan"]
 
 # 2.1 Han husband minority wife -------------------------------------------
 
@@ -124,9 +117,9 @@ EI_df = DataFrame(
 )
 
 for i in ethngrp_vector
-    # Retrieve sample_Zhongnan
-    hus_df, wif_df = retrieve_sample(i, "wif")
-    # Match sample_Zhongnans
+    # Retrieve sample
+    hus_df, wif_df = retrieve_sample(i, "wif", balance_distribution=false)
+    # Match samples
     matched_hus_df, matched_wif_df = matchit(hus_df, wif_df)
     # Calculate EI
     EI_hus = calculate_EI(matched_hus_df)
@@ -157,9 +150,9 @@ EI_df = DataFrame(
 )
 
 for i in ethngrp_vector
-    # Retrieve sample_Zhongnan
-    hus_df, wif_df = retrieve_sample(i, "hus")
-    # Match sample_Zhongnans
+    # Retrieve sample
+    hus_df, wif_df = retrieve_sample(i, "hus", balance_distribution=false)
+    # Match samples
     matched_hus_df, matched_wif_df = matchit(hus_df, wif_df)
     # Calculate EI
     EI_hus = calculate_EI(matched_hus_df)
@@ -217,6 +210,3 @@ end
 
 println(EI_df)
 println(EI_df_short)
-
-EI_df_Zhongnan = @transform(EI_df, :region = "South Central")
-EI_df_short_Zhongnan = @transform(EI_df_short, :region = "South Central")

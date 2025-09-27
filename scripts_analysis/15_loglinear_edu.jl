@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 16.1_loglinear_edu_Huabei.jl
 ## Purpose: Use log-linear models to analyze ethnic and educational mating
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10
@@ -14,15 +13,10 @@
 
 # 1 Contingency table -----------------------------------------------------
 
-# Select region Huabei
-sample_Huabei = @chain sample begin
-    @subset(:region .== "Huabei")
-end
-
 # Create a full combination of ethnic and educational pairings
-year_vector = unique(sample_Huabei.year)
-ethngrp_vector = unique(sample_Huabei.ethngrp_f)
-edu_vector = unique(sample_Huabei.edu_f)
+year_vector = unique(sample.year)
+ethngrp_vector = unique(sample.ethngrp_f)
+edu_vector = unique(sample.edu_f)
 
 ethngrp_edu_comb = DataFrame(
     year=[a for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector],
@@ -32,7 +26,7 @@ ethngrp_edu_comb = DataFrame(
     edu_m=[e for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector]
 )
 
-count_df = @chain sample_Huabei begin
+count_df = @chain sample begin
     @groupby(:year, :ethngrp_m, :ethngrp_f, :edu_f, :edu_m)
     @combine(:n = length(:ethngrp_m))
     # fill missing combinations with 0
@@ -40,6 +34,13 @@ count_df = @chain sample_Huabei begin
     @transform(:n = coalesce.(:n, 0))
     @orderby(:year, :ethngrp_m, :ethngrp_f, :edu_f, :edu_m)
 end
+
+num_small_groups = @chain count_df begin
+    @subset(:n .< 30) # Filter rows where n is less than 30
+    nrow
+end
+
+println("Number of rows with n < 30: ", num_small_groups)
 
 # 2 Parameters ------------------------------------------------------------
 
@@ -220,16 +221,49 @@ println(gof_df)
 odds_ratio_df = calculate_combined_education_coefficients(M3a)
 odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
-# Select ethnic groups with significant presence
-@chain sample begin
-    @subset(:region .== "Huabei")
-    @groupby(:ethngrp_f)
-    @combine(:n = length(:ethngrp_f))
-    @subset(:n .> 500)
-end
+# Plot
+f = Figure(; size=(800, 600), fontsize = 12)
 
-@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Manchu" .|| :ethngrp .== "Mongolian")
-odds_ratio_Huabei = @transform(odds_ratio_df, :region = "North")
+odds_ratio_plt = data(
+    @subset(odds_ratio_df, :ethngrp .!= "Kazakh" .&& :ethngrp .!= "Uyghur")
+    ) * (
+    mapping(
+        :ethngrp => "",
+        :coefficient => "Coefficient (Log Scale)",
+        :std_bar,
+        dodge_x = :edu => "Education",
+        color=:edu => "Education"
+    ) *
+    visual(Errorbars) +
+    mapping(
+        :ethngrp => "",
+        :coefficient => "Coefficient (Log Scale)",
+        dodge_x = :edu => "Education",
+        color=:edu => "Education"
+    ) *
+    visual(Scatter)
+)
+
+hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
+
+plt = draw!(
+    f[1, 1],
+    odds_ratio_plt + hlines_plt,
+    scales(
+        DodgeX = (; width = 0.5),
+        Color=(; palette=["#d7e1ee", "#bfcbdb", "#a4a2a8", "#c86558", "#991f17"])
+    ),
+    axis=(;
+        yticks=-10:2:2,
+        limits=(nothing, (-9, 1))
+    )
+)
+
+legend!(f[1, 2], plt)
+
+f
+
+save("figures/odds_by_edu.png", f; px_per_unit=2)
 
 # Expotentiate the coefficients
 @chain odds_ratio_df begin

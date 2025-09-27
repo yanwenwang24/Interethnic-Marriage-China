@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 12_trends.jl
 ## Purpose: Describe interethnic marriage patterns and trends
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-06
@@ -73,7 +72,7 @@ legend!(f[1, 2], plt)
 
 f
 
-save("graphs/inter_by_ethngrp.png", f; px_per_unit=2)
+save("figures/trends_by_ethngrp.png", f; px_per_unit=2)
 
 # 3 By Education ----------------------------------------------------------
 
@@ -134,7 +133,7 @@ legend!(f[1, 2], plt)
 
 f
 
-save("graphs/inter_by_edu.png", f; px_per_unit=2)
+save("figures/trends_by_edu.png", f; px_per_unit=2)
 
 # Full table by gender
 inter_by_edu_gender_df = @chain df_long begin
@@ -144,31 +143,3 @@ inter_by_edu_gender_df = @chain df_long begin
     @orderby(:year, :ethngrp, :sex, :edu)
     println()
 end
-
-# 4 Map ------------------------------------------------------------------
-
-# Read shape files
-china_shp = DataFrame(Shapefile.Table("data_cleaned/china_shp/china_shp.shp"))
-
-# Calculate the proportion of interethnic marriage by prefecture
-prop_region_df = @chain sample begin
-    @transform(:Cd_Prfc = string.(:province, :district))
-    @groupby(:Cd_Prfc)
-    @combine(:prop = mean(:inter_ethngrp))
-    # Recode some prefecture codes
-    @transform(:Cd_Prfc = ifelse.(:Cd_Prfc == "1102", "1101", :Cd_Prfc))
-    @transform(:Cd_Prfc = ifelse.(:Cd_Prfc == "3102", "3101", :Cd_Prfc))
-    @transform(:Cd_Prfc = ifelse.(:Cd_Prfc == "5002" || :Cd_Prfc == "5003", "5001", :Cd_Prfc))
-end
-
-china_shp = leftjoin(china_shp, prop_region_df, on=:Cd_Prfc)
-
-# Make maps
-map_plt = data(china_shp) *
-          mapping(
-              :geometry,
-              color=:prop => "Proportion"
-          ) * visual(Choropleth)
-
-map_plt = draw(map_plt)
-save("graphs/inter_by_region.png", map_plt; px_per_unit=2)

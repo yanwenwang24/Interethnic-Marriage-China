@@ -1,7 +1,6 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 15.5_loglinear_ethngrp_Xinan.jl
-## Purpose: Use log-linear models to analyze interethnic marriage in Xinan
+## Purpose: Use log-linear models to analyze interethnic marriage in Huadong
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-06
 ## Email: yanwen.wang@nyu.edu
@@ -14,14 +13,14 @@
 
 # 1 Contingency table -----------------------------------------------------
 
-# Select region Xinan
-sample_Xinan = @chain sample begin
-    @subset(:region .== "Xinan")
+# Select region Huadong
+sample_Huadong = @chain sample begin
+    @subset(:region .== "Huadong")
 end
 
 # Create a full combination of ethnic pairings
-year_vector = unique(sample_Xinan.year)
-ethngrp_vector = unique(sample_Xinan.ethngrp_f)
+year_vector = unique(sample_Huadong.year)
+ethngrp_vector = unique(sample_Huadong.ethngrp_f)
 
 ethngrp_comb = DataFrame(
     year=[x for x in year_vector for y in ethngrp_vector for z in ethngrp_vector],
@@ -29,7 +28,7 @@ ethngrp_comb = DataFrame(
     ethngrp_m=[z for x in year_vector for y in ethngrp_vector for z in ethngrp_vector]
 )
 
-count_df = @chain sample_Xinan begin
+count_df = @chain sample_Huadong begin
     @groupby(:year, :ethngrp_m, :ethngrp_f)
     @combine(:n = length(:ethngrp_f))
     @orderby(:year, :ethngrp_m, :ethngrp_f)
@@ -200,14 +199,14 @@ odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
 # Select ethnic groups with significant presence
 @chain sample begin
-    @subset(:region .== "Xinan")
+    @subset(:region .== "Huadong")
     @groupby(:ethngrp_f)
     @combine(:n = length(:ethngrp_f))
     @subset(:n .> 500)
 end
 
-@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern" .|| :ethngrp .== "Tibetan")
-odds_ratio_Xinan = @transform(odds_ratio_df, :region = "Southwest")
+@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern")
+odds_ratio_Huadong = @transform(odds_ratio_df, :region = "East")
 
 # Expotentiate coefficients
 @chain odds_ratio_df begin
@@ -219,19 +218,3 @@ odds_ratio_Xinan = @transform(odds_ratio_df, :region = "Southwest")
     @select(:ethngrp, :year, :coefficient, :std_error, :ratio)
     println()
 end
-
-# 3.4 Gender asymmetry ------------------------------------------------------
-
-pooled_df, temporal_df = analyze_all_minorities(count_df)
-
-temporal_df[!, :year] = categorical(temporal_df[!, :year], levels=year_vector)
-temporal_df[!, :std_bar] = temporal_df[!, :std_error] * 1.96
-
-@subset!(pooled_df, :minority_group .== "Hui" .|| :minority_group .== "Southern" .|| :minority_group .== "Tibetan")
-@subset!(temporal_df, :minority_group .== "Hui" .|| :minority_group .== "Southern".|| :minority_group .== "Tibetan")
-
-pooled_df_Xinan = @transform(pooled_df, :region = "Southwest")
-temporal_df_Xinan = @transform(temporal_df, :region = "Southwest")
-
-println(pooled_df_Xinan)
-println(temporal_df_Xinan)

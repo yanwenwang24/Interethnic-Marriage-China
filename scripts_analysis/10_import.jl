@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 10_import.jl
 ## Purpose: Import data and source scripts
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-06
@@ -37,8 +36,8 @@ set_theme!(theme_ggthemr(:fresh))
 
 # Load dictionaries and functions
 include("../scripts_tidy/dictionaries.jl")
-include("functions.jl")
+include("../scripts_analysis/functions.jl")
 
 # Load data
-census = DataFrame(Arrow.Table("Data_cleaned/census.arrow"))
-sample = DataFrame(Arrow.Table("Data_cleaned/sample.arrow"))
+census = DataFrame(Arrow.Table("data/processed/census.arrow"))
+sample = DataFrame(Arrow.Table("data/processed/sample.arrow"))

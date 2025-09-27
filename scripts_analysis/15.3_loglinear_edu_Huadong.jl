@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 16.4_loglinear_edu_Zhongnan.jl
 ## Purpose: Use log-linear models to analyze ethnic and educational mating
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10
@@ -14,15 +13,15 @@
 
 # 1 Contingency table -----------------------------------------------------
 
-# Select region Zhongnan
-sample_Zhongnan = @chain sample begin
-    @subset(:region .== "Zhongnan")
+# Select region Huadong
+sample_Huadong = @chain sample begin
+    @subset(:region .== "Huadong")
 end
 
 # Create a full combination of ethnic and educational pairings
-year_vector = unique(sample_Zhongnan.year)
-ethngrp_vector = unique(sample_Zhongnan.ethngrp_f)
-edu_vector = unique(sample_Zhongnan.edu_f)
+year_vector = unique(sample_Huadong.year)
+ethngrp_vector = unique(sample_Huadong.ethngrp_f)
+edu_vector = unique(sample_Huadong.edu_f)
 
 ethngrp_edu_comb = DataFrame(
     year=[a for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector],
@@ -32,7 +31,7 @@ ethngrp_edu_comb = DataFrame(
     edu_m=[e for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector]
 )
 
-count_df = @chain sample_Zhongnan begin
+count_df = @chain sample_Huadong begin
     @groupby(:year, :ethngrp_m, :ethngrp_f, :edu_f, :edu_m)
     @combine(:n = length(:ethngrp_m))
     # fill missing combinations with 0
@@ -222,14 +221,14 @@ odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
 # Select ethnic groups with significant presence
 @chain sample begin
-    @subset(:region .== "Zhongnan")
+    @subset(:region .== "Huadong")
     @groupby(:ethngrp_f)
     @combine(:n = length(:ethngrp_f))
     @subset(:n .> 500)
 end
 
 @subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern")
-odds_ratio_Zhongnan = @transform(odds_ratio_df, :region = "South Central")
+odds_ratio_Huadong = @transform(odds_ratio_df, :region = "East")
 
 # Expotentiate the coefficients
 @chain odds_ratio_df begin

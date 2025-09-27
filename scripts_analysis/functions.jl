@@ -99,98 +99,77 @@ function restrict_sample!(df::DataFrame)
     return current_sample
 end
 
-"""
-    decompose(mat_a, mat_b, outcome="off")
+function restrict_sample_alt!(df::DataFrame)
+    initial_size = size(df, 1)
+    println("Initial sample size: ", initial_size)
 
-Decomposes differences between two matrices into margin and odds ratio effects.
-Returns a vector containing [r2, diff_total, diff_margin, diff_oddratio].
-"""
-function decompose(mat_a, mat_b, outcome="off")
-    # Create counterfactual matrices
-    Z1 = create_new_matrix(mat_a, mat_b)[1]
-    Z2 = create_new_matrix(mat_a, mat_b)[2]
+    # Define all filtering steps
+    filter_steps = [
+        FilterStep(
+            "female",
+            df -> filter(:female => x -> x == 1, df),
+            "Filter by gender (female)"
+        ),
+        FilterStep(
+            "age",
+            df -> filter(
+                row -> !ismissing(row.age) && row.age >= 20 && row.age <= 29,
+                df
+            ),
+            "Filter by age betwen 20 and 29"
+        ),
+        FilterStep(
+            "marital status",
+            df -> filter(
+                row -> !ismissing(row.marst) && row.marst == "married",
+                df
+            ),
+            "Filter by marital status (marst == \"married\")"
+        ),
+        FilterStep(
+            "ethnicity",
+            df -> filter(
+                row ->
+                    !ismissing(row.ethnicity) && !ismissing(row.ethnicity_sp),
+                df
+            ),
+            "Filter by ethnicity (not missing)"
+        ),
+        FilterStep(
+            "education",
+            df -> filter(
+                row -> !ismissing(row.edu) && !ismissing(row.edu_sp),
+                df
+            ),
+            "Filter by education (not missing)"
+        )
+    ]
 
-    # Real rates
-    r1 = calculate_interrates(mat_a, outcome)
-    r2 = calculate_interrates(mat_b, outcome)
+    # Apply filters sequentially
+    current_sample = df
+    previous_size = initial_size
 
-    # Counterfactual rates
-    c1 = calculate_interrates(Z1, outcome)
-    c2 = calculate_interrates(Z2, outcome)
+    for (i, step) in enumerate(filter_steps)
+        # Apply filter
+        current_sample = step.filter_fn(current_sample)
+        current_size = size(current_sample, 1)
 
-    diff_total = r2 - r1
-    diff_margin = 1 / 2 * (r2 - c1) + 1 / 2 * (c2 - r1)
-    diff_oddratio = 1 / 2 * (c1 - r1) + 1 / 2 * (r2 - c2)
+        # Calculate statistics
+        dropped = previous_size - current_size
+        percent_dropped = round(dropped / previous_size * 100, digits=2)
 
-    return [r2, diff_total, diff_margin, diff_oddratio]
-end
+        # Print results
+        println(
+            "Step ", i, ": ", step.description,
+            ", size: ", current_size,
+            ", dropped: ", dropped,
+            " (", percent_dropped, "%)"
+        )
 
-"""
-    calculate_interrates(mat, outcome="off")
-
-Calculates proportion on, off, below, or above the diagonal of a matrix.
-Returns the calculated proportion based on the specified outcome type.
-"""
-function calculate_interrates(mat, outcome="off")
-    # Convert counts to proportions
-    mat_prop = mat / sum(mat)
-    if outcome == "on" # Endogamy or homogamy 
-        interrates = (sum(mat_prop[i, i] for i in 1:size(mat_prop)[1]))
-    elseif outcome == "off" # Exogamy or heterogamy
-        interrates = 1 - (sum(mat_prop[i, i] for i in 1:size(mat_prop)[1]))
-    elseif outcome == "below" # Hypogamy
-        interrates = sum(mat_prop[i, j] for i in 1:size(mat_prop)[1], j in 1:size(mat_prop)[2] if i < j)
-    elseif outcome == "above" # Hypergamy
-        interrates = sum(mat_prop[i, j] for i in 1:size(mat_prop)[1], j in 1:size(mat_prop)[2] if i > j)
-    else
-        throw(ArgumentError("Outcome can be on, off, below, or above."))
+        previous_size = current_size
     end
 
-    return interrates
-end
-
-"""
-    create_new_matrix(mat_a, mat_b)
-
-Creates counterfactual matrices using IPF (Iterative Proportional Fitting).
-Returns two counterfactual matrices (Z1, Z2).
-"""
-function create_new_matrix(mat_a, mat_b)
-
-    # Row and column margins, and total for matrix a
-    mat_a_row = vec(sum(mat_a, dims=2))
-    mat_a_col = vec(sum(mat_a, dims=1))
-    mat_a_total = sum(mat_a)
-
-    # Expected counts and odd ratios
-    mat_a_expected = [(mat_a_row[i] * mat_a_col[j]) / mat_a_total for i in 1:size(mat_a)[1], j in 1:size(mat_a)[1]]
-    mat_a_oddratio = mat_a ./ mat_a_expected
-
-    # Row and column margins, and total for matrix b
-    mat_b_row = vec(sum(mat_b, dims=2))
-    mat_b_col = vec(sum(mat_b, dims=1))
-    mat_b_total = sum(mat_b)
-
-    # Expected counts and odd ratios
-    mat_b_expected = [(mat_b_row[i] * mat_b_col[j]) / mat_b_total for i in 1:size(mat_a)[1], j in 1:size(mat_a)[1]]
-    mat_b_oddratio = mat_b ./ mat_b_expected
-
-    # Create counterfactual matrix using IPF
-    ## First: margins from matrix a, odd ratios from matrix b
-    X1 = mat_a_expected .* mat_b_oddratio
-    u1 = mat_a_row
-    v1 = mat_a_col
-
-    Z1 = Array(ipf(X1, [u1, v1]; maxiter=10000)) .* X1
-
-    ## Second: margins from matrix b, odd ratios from matrix a
-    X2 = mat_b_expected .* mat_a_oddratio
-    u2 = mat_b_row
-    v2 = mat_b_col
-
-    Z2 = Array(ipf(X2, [u2, v2]; maxiter=10000)) .* X2
-
-    return Z1, Z2
+    return current_sample
 end
 
 """
@@ -449,288 +428,6 @@ function add_analysis_metrics!(results_df)
                 [:odds_ratio, :ci_lower, :ci_upper]
     )
     return results_df
-end
-
-"""
-    analyze_gender_asymmetry(count_data::DataFrame, minority_group::String)
-
-Analyzes gender asymmetry in interethnic marriages for a specific minority group.
-Returns a dictionary containing statistical measures of gender asymmetry.
-"""
-function analyze_gender_asymmetry(count_data::DataFrame, minority_group::String)
-    analysis_data = @chain count_data begin
-        # Create baseline intermarriage indicator
-        @transform(
-            :base_inter = ifelse.(
-                (:ethngrp_f .== minority_group .&& :ethngrp_m .== "Han") .||
-                (:ethngrp_f .== "Han" .&& :ethngrp_m .== minority_group),
-                1,
-                0
-            )
-        )
-        @transform(:base_inter = categorical(:base_inter, levels=[0, 1]))
-
-        # Create gender-specific intermarriage categories
-        @transform(
-            :gender_inter = ifelse.(
-                (:ethngrp_f .== minority_group .&& :ethngrp_m .== "Han"),
-                string(minority_group, "(wif)"),
-                ifelse.(
-                    (:ethngrp_f .== "Han" .&& :ethngrp_m .== minority_group),
-                    string(minority_group, "(hus)"),
-                    "None"
-                )
-            )
-        )
-        @transform(:gender_inter = categorical(
-            :gender_inter,
-            levels=["None", string(minority_group, "(hus)"), string(minority_group, "(wif)")]
-        ))
-    end
-
-    # Fit models
-    baseline_model = glm(
-        @formula(n ~ year * ethngrp_f + year * ethngrp_m + base_inter),
-        analysis_data,
-        Poisson()
-    )
-
-    gender_model = glm(
-        @formula(n ~ year * ethngrp_f + year * ethngrp_m + gender_inter),
-        analysis_data,
-        Poisson()
-    )
-
-    # Likelihood ratio test
-    ll_difference = loglikelihood(gender_model) - loglikelihood(baseline_model)
-    lr_statistic = 2 * ll_difference
-    lr_p_value = 1 - cdf(Chisq(1), lr_statistic)
-
-    # Extract coefficients
-    coef_names = coefnames(gender_model)
-    hus_index = findfirst(x -> occursin(string(minority_group, "(hus)"), String(x)), coef_names)
-    wif_index = findfirst(x -> occursin(string(minority_group, "(wif)"), String(x)), coef_names)
-
-    if isnothing(hus_index) || isnothing(wif_index)
-        error("Could not find gender-specific coefficients for $minority_group")
-    end
-
-    # Calculate statistics
-    coefficient = coef(gender_model)[hus_index] - coef(gender_model)[wif_index]
-    pooled_se = sqrt(vcov(gender_model)[hus_index, hus_index] +
-                     vcov(gender_model)[wif_index, wif_index] -
-                     2 * vcov(gender_model)[hus_index, wif_index])
-
-    z_statistic = coefficient / pooled_se
-    wald_p_value = 2 * (1 - cdf(Normal(), abs(z_statistic)))
-    odds_ratio = exp(coefficient)
-
-    return Dict(
-        "minority_group" => minority_group,
-        "coefficient" => coefficient,
-        "std_error" => pooled_se,
-        "z_statistic" => z_statistic,
-        "wald_p_value" => wald_p_value,
-        "odds_ratio" => odds_ratio,
-        "lr_statistic" => lr_statistic,
-        "lr_p_value" => lr_p_value
-    )
-end
-
-"""
-    analyze_temporal_gender_asymmetry(count_data::DataFrame, minority_group::String)
-
-Analyzes temporal changes in gender asymmetry for a specific minority group.
-Returns a dictionary containing year-specific results and likelihood ratio test statistics.
-"""
-function analyze_temporal_gender_asymmetry(count_data::DataFrame, minority_group::String)
-    analysis_data = @chain count_data begin
-        @transform(
-            :gender_inter = ifelse.(
-                (:ethngrp_f .== minority_group .&& :ethngrp_m .== "Han"),
-                string(minority_group, "(wif)"),
-                ifelse.(
-                    (:ethngrp_f .== "Han" .&& :ethngrp_m .== minority_group),
-                    string(minority_group, "(hus)"),
-                    "None"
-                )
-            )
-        )
-        @transform(:gender_inter = categorical(
-            :gender_inter,
-            levels=["None", string(minority_group, "(hus)"), string(minority_group, "(wif)")]
-        ))
-
-        @transform(:year = categorical(:year))
-    end
-
-    baseline_model = glm(
-        @formula(n ~ year * ethngrp_f + year * ethngrp_m + gender_inter),
-        analysis_data,
-        Poisson()
-    )
-
-    temporal_model = glm(
-        @formula(n ~ year * ethngrp_f + year * ethngrp_m + year * gender_inter),
-        analysis_data,
-        Poisson()
-    )
-
-    ll_difference = loglikelihood(temporal_model) - loglikelihood(baseline_model)
-    lr_statistic = 2 * ll_difference
-    df_difference = length(unique(analysis_data.year)) - 1
-    lr_p_value = 1 - cdf(Chisq(df_difference * 2), lr_statistic)
-
-    years = levels(analysis_data.year)
-    year_results = Dict{Int,Dict{String,Float64}}()
-
-    coef_names = coefnames(temporal_model)
-    coef_matrix = coef(temporal_model)
-    vcov_matrix = vcov(temporal_model)
-
-    hus_base = string(minority_group, "(hus)")
-    wif_base = string(minority_group, "(wif)")
-
-    hus_index = findfirst(x -> occursin(hus_base, x) && !occursin("year", x), coef_names)
-    wif_index = findfirst(x -> occursin(wif_base, x) && !occursin("year", x), coef_names)
-
-    if isnothing(hus_index) || isnothing(wif_index)
-        error("Could not find base coefficients for $minority_group")
-    end
-
-    for year in years
-        if year == first(years)
-            coefficient = coef_matrix[hus_index] - coef_matrix[wif_index]
-            pooled_se = sqrt(vcov_matrix[hus_index, hus_index] +
-                             vcov_matrix[wif_index, wif_index] -
-                             2 * vcov_matrix[hus_index, wif_index])
-        else
-            year_term = "year: $year"
-            hus_year_index = findfirst(x -> occursin(hus_base, x) && occursin(year_term, x), coef_names)
-            wif_year_index = findfirst(x -> occursin(wif_base, x) && occursin(year_term, x), coef_names)
-
-            if isnothing(hus_year_index) || isnothing(wif_year_index)
-                error("Could not find year-specific coefficients for $year")
-            end
-
-            coefficient = (coef_matrix[hus_index] + coef_matrix[hus_year_index]) -
-                          (coef_matrix[wif_index] + coef_matrix[wif_year_index])
-
-            var_terms = [
-                vcov_matrix[hus_index, hus_index],
-                vcov_matrix[hus_year_index, hus_year_index],
-                vcov_matrix[wif_index, wif_index],
-                vcov_matrix[wif_year_index, wif_year_index]
-            ]
-
-            covar_terms = [
-                2 * vcov_matrix[hus_index, hus_year_index],
-                -2 * vcov_matrix[hus_index, wif_index],
-                -2 * vcov_matrix[hus_index, wif_year_index],
-                -2 * vcov_matrix[hus_year_index, wif_index],
-                -2 * vcov_matrix[hus_year_index, wif_year_index],
-                2 * vcov_matrix[wif_index, wif_year_index]
-            ]
-
-            pooled_se = sqrt(sum(var_terms) + sum(covar_terms))
-        end
-
-        z_statistic = coefficient / pooled_se
-        p_value = 2 * (1 - cdf(Normal(), abs(z_statistic)))
-        odds_ratio = exp(coefficient)
-
-        year_results[year] = Dict(
-            "coefficient" => coefficient,
-            "std_error" => pooled_se,
-            "z_statistic" => z_statistic,
-            "p_value" => p_value,
-            "odds_ratio" => odds_ratio
-        )
-    end
-
-    return Dict(
-        "minority_group" => minority_group,
-        "year_specific_results" => year_results,
-        "lr_statistic" => lr_statistic,
-        "lr_p_value" => lr_p_value,
-        "lr_df" => df_difference * 2
-    )
-end
-
-"""
-    analyze_all_minorities(count_data::DataFrame)
-
-Analyzes gender asymmetry for all minority groups, both pooled and temporal.
-Returns two DataFrames containing pooled and temporal results for all minority groups.
-"""
-function analyze_all_minorities(count_data::DataFrame)
-    minority_groups = ethngrp_vector[ethngrp_vector.!="Han"]
-
-    pooled_results = DataFrame(
-        minority_group=String[],
-        coefficient=Float64[],
-        std_error=Float64[],
-        z_statistic=Float64[],
-        wald_p_value=Float64[],
-        odds_ratio=Float64[],
-        lr_statistic=Float64[],
-        lr_p_value=Float64[]
-    )
-
-    temporal_results = DataFrame(
-        minority_group=String[],
-        year=Int[],
-        coefficient=Float64[],
-        std_error=Float64[],
-        z_statistic=Float64[],
-        p_value=Float64[],
-        odds_ratio=Float64[],
-        model_lr_stat=Float64[],
-        model_lr_p=Float64[]
-    )
-
-    for minority in minority_groups
-        try
-            pooled_analysis = analyze_gender_asymmetry(count_data, minority)
-
-            pooled_row = (
-                minority_group=pooled_analysis["minority_group"],
-                coefficient=round(pooled_analysis["coefficient"], digits=3),
-                std_error=round(pooled_analysis["std_error"], digits=3),
-                z_statistic=round(pooled_analysis["z_statistic"], digits=3),
-                wald_p_value=round(pooled_analysis["wald_p_value"], digits=3),
-                odds_ratio=round(pooled_analysis["odds_ratio"], digits=3),
-                lr_statistic=round(pooled_analysis["lr_statistic"], digits=3),
-                lr_p_value=round(pooled_analysis["lr_p_value"], digits=3)
-            )
-            push!(pooled_results, pooled_row)
-
-            temporal_analysis = analyze_temporal_gender_asymmetry(count_data, minority)
-
-            for (year, results) in temporal_analysis["year_specific_results"]
-                temporal_row = (
-                    minority_group=minority,
-                    year=year,
-                    coefficient=round(results["coefficient"], digits=3),
-                    std_error=round(results["std_error"], digits=3),
-                    z_statistic=round(results["z_statistic"], digits=3),
-                    p_value=round(results["p_value"], digits=3),
-                    odds_ratio=round(results["odds_ratio"], digits=3),
-                    model_lr_stat=round(temporal_analysis["lr_statistic"], digits=3),
-                    model_lr_p=round(temporal_analysis["lr_p_value"], digits=3)
-                )
-                push!(temporal_results, temporal_row)
-            end
-
-        catch e
-            println("Error analyzing $minority: ", e)
-        end
-    end
-
-    sort!(pooled_results, :minority_group)
-    sort!(temporal_results, [:minority_group, :year])
-
-    return pooled_results, temporal_results
 end
 
 """

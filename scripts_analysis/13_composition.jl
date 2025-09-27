@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 13_composition.jl
 ## Purpose: Compositions of ethnic groups and education
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-07
@@ -97,4 +96,4 @@ legend!(f[1, 2], plt)
 
 f
 
-save("graphs/edu_comp.png", f; px_per_unit=2)
+save("figures/edu_comp.png", f; px_per_unit=2)

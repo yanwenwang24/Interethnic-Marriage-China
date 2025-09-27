@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 16.5_loglinear_edu_Xinan.jl
 ## Purpose: Use log-linear models to analyze ethnic and educational mating
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10

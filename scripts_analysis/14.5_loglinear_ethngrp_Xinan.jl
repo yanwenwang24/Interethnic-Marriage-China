@@ -1,9 +1,8 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 16.6_loglinear_edu_Xibei.jl
-## Purpose: Use log-linear models to analyze ethnic and educational mating
+## Purpose: Use log-linear models to analyze interethnic marriage in Xinan
 ## Author: Yanwen Wang
-## Date Created: 2024-10-10
+## Date Created: 2024-11-06
 ## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
@@ -14,31 +13,28 @@
 
 # 1 Contingency table -----------------------------------------------------
 
-# Select region Xibei
-sample_Xibei = @chain sample begin
-    @subset(:region .== "Xibei")
+# Select region Xinan
+sample_Xinan = @chain sample begin
+    @subset(:region .== "Xinan")
 end
 
-# Create a full combination of ethnic and educational pairings
-year_vector = unique(sample_Xibei.year)
-ethngrp_vector = unique(sample_Xibei.ethngrp_f)
-edu_vector = unique(sample_Xibei.edu_f)
+# Create a full combination of ethnic pairings
+year_vector = unique(sample_Xinan.year)
+ethngrp_vector = unique(sample_Xinan.ethngrp_f)
 
-ethngrp_edu_comb = DataFrame(
-    year=[a for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector],
-    ethngrp_f=[b for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector],
-    ethngrp_m=[c for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector],
-    edu_f=[d for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector],
-    edu_m=[e for a in year_vector for b in ethngrp_vector for c in ethngrp_vector for d in edu_vector for e in edu_vector]
+ethngrp_comb = DataFrame(
+    year=[x for x in year_vector for y in ethngrp_vector for z in ethngrp_vector],
+    ethngrp_f=[y for x in year_vector for y in ethngrp_vector for z in ethngrp_vector],
+    ethngrp_m=[z for x in year_vector for y in ethngrp_vector for z in ethngrp_vector]
 )
 
-count_df = @chain sample_Xibei begin
-    @groupby(:year, :ethngrp_m, :ethngrp_f, :edu_f, :edu_m)
-    @combine(:n = length(:ethngrp_m))
+count_df = @chain sample_Xinan begin
+    @groupby(:year, :ethngrp_m, :ethngrp_f)
+    @combine(:n = length(:ethngrp_f))
+    @orderby(:year, :ethngrp_m, :ethngrp_f)
     # fill missing combinations with 0
-    leftjoin(ethngrp_edu_comb, _, on=[:year, :ethngrp_m, :ethngrp_f, :edu_f, :edu_m])
+    leftjoin(ethngrp_comb, _, on=[:year, :ethngrp_m, :ethngrp_f])
     @transform(:n = coalesce.(:n, 0))
-    @orderby(:year, :ethngrp_m, :ethngrp_f, :edu_f, :edu_m)
 end
 
 # 2 Parameters ------------------------------------------------------------
@@ -138,32 +134,12 @@ count_df = @chain count_df begin
     @transform(:diag_aff = categorical(:diag_aff, levels=diag_aff_levels))
 end
 
-# 2.3 Education parameters ------------------------------------------------
-
-count_df = @chain count_df begin
-    # Homogamy vs. heterogamy
-    @transform(:edu_diag = ifelse.(:edu_f .== :edu_m, "homo", "heter"))
-    @transform(:edu_diag = categorical(:edu_diag, levels=["heter", "homo"]))
-
-    # Distance of heterogamy
-    @transform(
-        :edu_diag_aff = ifelse.(
-            :edu_f .== :edu_m,
-            string.("homo", :edu_f),
-            string.("heter", abs.(:edu_m .- :edu_f))
-        )
-    )
-    @transform(:edu_diag_aff = categorical(:edu_diag_aff, levels=["heter1", "homo1", "homo2", "homo3", "heter2"]))
-end
-
 count_df = @chain count_df begin
     @transform(
         :n = Int64.(:n),
         :year = categorical(:year),
         :ethngrp_f = categorical(:ethngrp_f, levels=ethngrp_vector),
         :ethngrp_m = categorical(:ethngrp_m, levels=ethngrp_vector),
-        :edu_f = categorical(:edu_f),
-        :edu_m = categorical(:edu_m)
     )
 end
 
@@ -173,25 +149,27 @@ end
 
 Random.seed!(1024)
 
-M0 = glm(@formula(n ~ ethngrp_f*edu_f*year + ethngrp_m*edu_m*year), count_df, Poisson())
+M0 = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m), count_df, Poisson())
+M1a = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + diag), count_df, Poisson())
+M1b = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff), count_df, Poisson())
+M1c = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + diag_var), count_df, Poisson())
+M1d = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + aff_var), count_df, Poisson())
+M1e = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + diag_aff), count_df, Poisson())
 
-M1 = glm(@formula(n ~ ethngrp_f*edu_f*year + ethngrp_m*edu_m*year + diag_aff), count_df, Poisson())
+M2a = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag * year), count_df, Poisson())
+M2b = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + aff * year), count_df, Poisson())
+M2c = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag_var * year), count_df, Poisson())
+M2d = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + aff_var * year), count_df, Poisson())
+M2e = glm(@formula(n ~ year * ethngrp_f + year * ethngrp_m + ethngrp_f * ethngrp_m + diag_aff * year), count_df, Poisson())
 
-M2a = glm(@formula(n ~ ethngrp_f*edu_f*year + ethngrp_m*edu_m*year + diag_aff + edu_diag), count_df, Poisson())
-M2b = glm(@formula(n ~ ethngrp_f*edu_f*year + ethngrp_m*edu_m*year + diag_aff + edu_diag_aff), count_df, Poisson())
-
-M3a = glm(@formula(n ~ ethngrp_f*edu_f*year + ethngrp_m*edu_m*year + ethngrp_f*ethngrp_m*year + edu_f*edu_m*year + diag_aff*edu_diag_aff), count_df, Poisson())
-M3b = glm(@formula(n ~ ethngrp_f*edu_f*year + ethngrp_m*edu_m*year + ethngrp_f*ethngrp_m*year + edu_f*edu_m*year + diag_aff*edu_diag_aff*year), count_df, Poisson())
-
-M4 = glm(@formula(n ~ year*ethngrp_f*ethngrp_m*edu_f*edu_m), count_df, Poisson())
+M3 = glm(@formula(n ~ year * ethngrp_f * ethngrp_m), count_df, Poisson())
 
 # Store models in a dictionary
 model_dict = Dict(
     "M0" => M0,
-    "M1" => M1,
-    "M2a" => M2a, "M2b" => M2b, 
-    "M3a" => M3a, "M3b" => M3b,
-    "M4" => M4
+    "M1a" => M1a, "M1b" => M1b, "M1c" => M1c, "M1d" => M1d, "M1e" => M1e,
+    "M2a" => M2a, "M2b" => M2b, "M2c" => M2c, "M2d" => M2d, "M2e" => M2e,
+    "M3" => M3
 )
 
 # 3.2 Model comparison -----------------------------------------------------
@@ -211,33 +189,32 @@ for (name, model) in model_dict
 end
 
 gof_df = @orderby(gof_df, :mod)
-
 println(gof_df)
 
 # 3.3 Odd ratios -----------------------------------------------------------
 
-# Model selected: M3a
-odds_ratio_df = calculate_combined_education_coefficients(M3a)
+# Model selected: M2d
+odds_ratio_df = calculate_combined_coefficients(M2d)
 odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
 # Select ethnic groups with significant presence
 @chain sample begin
-    @subset(:region .== "Xibei")
+    @subset(:region .== "Xinan")
     @groupby(:ethngrp_f)
     @combine(:n = length(:ethngrp_f))
     @subset(:n .> 500)
 end
 
-@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Mongolian"  .|| :ethngrp .== "Tibetan")
-odds_ratio_Xibei = @transform(odds_ratio_df, :region = "Northwest")
+@subset!(odds_ratio_df, :ethngrp .== "Hui" .|| :ethngrp .== "Southern" .|| :ethngrp .== "Tibetan")
+odds_ratio_Xinan = @transform(odds_ratio_df, :region = "Southwest")
 
-# Expotentiate the coefficients
+# Expotentiate coefficients
 @chain odds_ratio_df begin
     @transform(:ratio = round.(exp.(:coefficient) * 1000, digits=2))
     @transform(
         :coefficient = round.(:coefficient, digits=2),
         :std_error = round.(:std_error, digits=2),
     )
-    @select(:ethngrp, :edu, :coefficient, :std_error, :ratio)
-    println
+    @select(:ethngrp, :year, :coefficient, :std_error, :ratio)
+    println()
 end
