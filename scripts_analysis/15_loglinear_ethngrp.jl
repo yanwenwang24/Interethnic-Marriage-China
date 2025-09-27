@@ -33,6 +33,13 @@ count_df = @chain sample begin
     @transform(:n = coalesce.(:n, 0))
 end
 
+num_small_groups = @chain count_df begin
+    @subset(:n .< 30) # Filter rows where n is less than 30
+    nrow
+end
+
+println("Number of rows with n < 30: ", num_small_groups)
+
 # 2 Parameters ------------------------------------------------------------
 
 # 2.1 Levels for categorical variables ------------------------------------
