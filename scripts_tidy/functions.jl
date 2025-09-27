@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: functions.jl
 ## Purpose: Store functions for data cleaning and analysis
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-04

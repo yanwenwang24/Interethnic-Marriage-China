@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 01_tidy_82.jl
 ## Purpose: Clean Census 1982 data
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-05
@@ -16,11 +15,11 @@
 
 # Read dta file (original) and convert to arrow format
 # using StatFiles, Arrow
-# census_1982 = DataFrame(load("Data_original/1982_census.dta"))
-# Arrow.write("Data_original/census_1982.arrow", census_1982)
+# census_1982 = DataFrame(load("data/raw/1982_census.dta"))
+# Arrow.write("data/raw/census_1982.arrow", census_1982)
 
 # Read arrow file
-census_1982 = DataFrame(Arrow.Table("Data_original/census_1982.arrow"))
+census_1982 = DataFrame(Arrow.Table("data/raw/census_1982.arrow"))
 
 # 2 Clean data --------------------------------------------------------------
 

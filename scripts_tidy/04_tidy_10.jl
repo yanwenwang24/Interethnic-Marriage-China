@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 04_tidy_10.jl
 ## Purpose: Clean Census 2010 data
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-05
@@ -16,11 +15,11 @@
 
 # Read dta file (original) and convert to arrow format
 # using StatFiles, Arrow
-# census_2010 = DataFrame(load("Data_original/2010_census.dta"))
-# Arrow.write("Data_original/census_2010.arrow", census_2010)
+# census_2010 = DataFrame(load("data/raw/2010_census.dta"))
+# Arrow.write("data/raw/census_2010.arrow", census_2010)
 
 # Read arrow file
-census_2010 = DataFrame(Arrow.Table("Data_original/census_2010.arrow"))
+census_2010 = DataFrame(Arrow.Table("data/raw/census_2010.arrow"))
 
 # 2 Clean data --------------------------------------------------------------
 

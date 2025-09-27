@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 00_tidy_master.jl
 ## Purpose: Master file to tidy the raw data
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-04

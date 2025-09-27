@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: dictionaries.jl
 ## Purpose: Define dictionaries for data cleaning
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-04

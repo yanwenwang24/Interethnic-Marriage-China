@@ -1,6 +1,5 @@
 ## ------------------------------------------------------------------------
 ##
-## Script name: 05_tidy_join.jl
 ## Purpose: Combine cleaned data and construct the final dataset
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-05
@@ -135,4 +134,4 @@ census = leftjoin!(census, entropy_df, on=[:year, :province, :district])
 
 # 3 Save ------------------------------------------------------------------
 
-Arrow.write("Data_cleaned/census.arrow", census)
+Arrow.write("data/processed/census.arrow", census)
