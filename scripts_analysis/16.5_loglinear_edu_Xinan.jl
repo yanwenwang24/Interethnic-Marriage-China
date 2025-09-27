@@ -4,7 +4,7 @@
 ## Purpose: Use log-linear models to analyze ethnic and educational mating
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##

@@ -4,7 +4,7 @@
 ## Purpose: Analyze status exchange using the Exchagne Index
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-10
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##

@@ -4,7 +4,7 @@
 ## Purpose: Generate graphs by region
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-15
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##

@@ -4,7 +4,7 @@
 ## Purpose: Clean Census 2010 data
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-05
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##

@@ -4,7 +4,7 @@
 ## Purpose: Select samples for analysis
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-06
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##

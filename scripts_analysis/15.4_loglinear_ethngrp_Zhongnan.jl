@@ -4,7 +4,7 @@
 ## Purpose: Use log-linear models to analyze interethnic marriage in Zhongnan
 ## Author: Yanwen Wang
 ## Date Created: 2024-11-06
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##

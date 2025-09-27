@@ -4,7 +4,7 @@
 ## Purpose: Master file to tidy the raw data
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-04
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##

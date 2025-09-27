@@ -4,7 +4,7 @@
 ## Purpose: Use log-linear models to analyze interethnic marriage.
 ## Author: Yanwen Wang
 ## Date Created: 2024-10-07
-## Email: yanwenwang@u.nus.edu
+## Email: yanwen.wang@nyu.edu
 ##
 ## ------------------------------------------------------------------------
 ##
