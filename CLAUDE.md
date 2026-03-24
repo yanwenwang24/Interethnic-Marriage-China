@@ -8,14 +8,15 @@ Replication package for "Bridging Ethnic Boundaries: The Evolution of Interethni
 
 ## Language and Dependencies
 
-All code is written in **Julia**. Key packages:
+Analysis code is written in **Julia**. Visualization is in **R** (ggplot2).
+
+Julia packages:
 
 - **Data**: DataFrames, DataFramesMeta, Arrow, CategoricalArrays, FreqTables
 - **Statistics/Models**: GLM, StatsBase, Distributions, ProportionalFitting, LinearAlgebra
-- **Plotting**: AlgebraOfGraphics, CairoMakie, MakieThemes (theme: `theme_ggthemr(:fresh)`)
 - **R interop**: RCall (uses R's `MatchIt` package for exact matching via `@rget`/`R""` macros)
 
-R packages required: `tidyverse`, `MatchIt`.
+R packages required: `tidyverse`, `arrow`, `scales`, `MatchIt`.
 
 ## Running the Code
 
@@ -32,10 +33,18 @@ Analysis (run from project root after `10_import.jl` sets up the environment):
 ```julia
 include("scripts_analysis/10_import.jl")  # loads packages, data, dictionaries, functions
 include("scripts_analysis/11_sample.jl")  # restricts sample
-# Then run individual analysis scripts (12-18)
+# Then run individual analysis scripts (12-19)
 ```
 
-Scripts must be run in numeric order — each depends on variables created by prior scripts.
+Scripts must be run in numeric order — each depends on variables created by prior scripts. Analysis scripts export plot-ready DataFrames as Arrow files to `data/visualization/`.
+
+Visualization (run from project root after Arrow files are generated):
+
+```r
+source("scripts_visualize/00_main.R")
+```
+
+This sources `theme.R` (shared theme/palettes) then each `fig*.R` script, generating PDF figures in `figures/`.
 
 ## Architecture
 
@@ -46,16 +55,23 @@ Scripts must be run in numeric order — each depends on variables created by pr
    - `functions.jl`: Household matching (`create_parent_matches`, `create_children_matches`), entropy calculation
    - Output: `data/processed/census.arrow`, `data/processed/sample.arrow`
 
-2. **`scripts_analysis/`** — All analytical scripts
+2. **`scripts_analysis/`** — All analytical scripts (Julia)
    - `functions.jl`: Core analysis functions (sample restriction, log-linear model utilities, Exchange Index calculation, exact matching via R)
    - `10_import.jl`: Entry point — loads all packages, dictionaries, functions, and data
    - `11_sample.jl`: Applies sample restrictions (married women aged 25-34 with non-missing ethnicity/education)
-   - `12-13`: Descriptive trends and ethnic composition
+   - `12-13`: Descriptive trends and ethnic composition; export Arrow files for visualization
    - `14_loglinear_ethngrp.jl` + `14.1-14.7`: Log-linear models of intermarriage by ethnic group (national + 6 regions)
    - `15_loglinear_edu.jl` + `15.1-15.7`: Log-linear models with education interactions (national + 6 regions)
    - `16_exchange_index_ethngrp.jl` + `16.1-16.6`: Exchange Index by ethnic group (national + 6 regions)
    - `17_exchange_index_ethnicity.jl`: Exchange Index for individual Southern ethnicities
    - `18.1-18.2`: Exchange Index split by preferential birth policy status
+   - `19_exchange_index_by_tertile.jl`: Exchange Index by education tertile
+
+3. **`scripts_visualize/`** — All visualization scripts (R/ggplot2)
+   - `00_main.R`: Orchestrator — loads packages and sources all figure scripts
+   - `theme.R`: Shared custom theme (`theme_intermarriage`), color palettes, factor orderings
+   - `fig1`–`fig7`: One script per figure, reading Arrow data from `data/visualization/`
+   - Output: PDF figures in `figures/`
 
 ### Key Ethnic Group Classification
 
