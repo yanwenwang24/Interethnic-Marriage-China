@@ -199,47 +199,7 @@ println(gof_df)
 odds_ratio_df = calculate_combined_coefficients(M2d)
 odds_ratio_df[!, :std_bar] = odds_ratio_df[!, :std_error] * 1.96
 
-# Plot
-f = Figure(; size=(800, 600), fontsize=12)
-
-odds_ratio_plt = data(odds_ratio_df) * (
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        :std_bar,
-        dodge_x=:year => "Year",
-        color=:year => "Year"
-    ) *
-    visual(Errorbars) +
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        dodge_x=:year => "Year",
-        color=:year => "Year"
-    ) *
-    visual(Scatter)
-)
-
-hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
-
-plt = draw!(
-    f[1, 1],
-    odds_ratio_plt + hlines_plt,
-    scales(
-        DodgeX=(; width=0.5),
-        Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
-    ),
-    axis=(;
-        yticks=-13:2:2,
-        limits=(nothing, (-13, 1))
-    )
-)
-
-legend!(f[1, 2], plt)
-
-f
-
-save("figures/odds_by_ethngrp.png", f; px_per_unit=2)
+Arrow.write("data/visualization/fig4_odds_by_ethngrp.arrow", odds_ratio_df)
 
 # Expotentiate coefficients
 @chain odds_ratio_df begin

@@ -30,46 +30,4 @@ odds_ratio_df = vcat(
     )
 )
 
-# Plot
-f = Figure(; size=(1600, 1200), fontsize=12)
-
-odds_ratio_plt = data(odds_ratio_df) * (
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        :std_bar,
-        dodge_x=:year => "Year",
-        color=:year => "Year",
-        layout=:region => "Region"
-    ) *
-    visual(Errorbars) +
-    mapping(
-        :ethngrp => "",
-        :coefficient => "Coefficient (Log Scale)",
-        dodge_x=:year => "Year",
-        color=:year => "Year",
-        layout=:region => "Region"
-    ) *
-    visual(Scatter)
-)
-
-hlines_plt = mapping(0) * visual(HLines, color=(:grey, 0.5), linestyle=:dash)
-
-plt = draw!(
-    f[1, 1],
-    odds_ratio_plt + hlines_plt,
-    scales(
-        DodgeX=(; width=0.5),
-        Color=(; palette=["#cbd6e4", "#b3bfd1", "#df8879", "#b04238"])
-    ),
-    axis=(;
-        yticks=-12:2:2,
-        limits=(nothing, (-12, 1))
-    )
-)
-
-legend!(f[1, 2], plt)
-
-f
-
-save("figures/odds_by_ethngrp_region.png", f; px_per_unit=2)
+Arrow.write("data/visualization/fig5_odds_by_ethngrp_region.arrow", odds_ratio_df)

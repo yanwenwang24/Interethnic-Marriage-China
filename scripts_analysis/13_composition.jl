@@ -72,28 +72,4 @@ ethngrp_edu_comp = @chain ethngrp_edu_comp begin
     @transform(:year = categorical(:year))
 end
 
-# Plot
-f = Figure(; size=(1200, 800), fontsize=12)
-
-ethngrp_edu_comp_plt = data(ethngrp_edu_comp) *
-                       mapping(
-                           :year => presorted => "",
-                           :prop => "Proportion",
-                           color=:edu => presorted => "Education",
-                           stack=:edu => "Education",
-                           row=:ethngrp
-                       ) *
-                       visual(BarPlot, direction=:x)
-
-plt = draw!(
-    f[1, 1],
-    ethngrp_edu_comp_plt,
-    scales(Color=(; palette=["#d7e1ee", "#a4a2a8", "#991f17"])),
-    axis=(; xticks=(0:0.2:1, ["0%", "20%", "40%", "60%", "80%", "100%"]))
-)
-
-legend!(f[1, 2], plt)
-
-f
-
-save("figures/edu_comp.png", f; px_per_unit=2)
+Arrow.write("data/visualization/fig3_edu_comp.arrow", ethngrp_edu_comp)

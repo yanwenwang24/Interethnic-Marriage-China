@@ -27,52 +27,7 @@ prop_by_ethngrp_year = @chain sample begin
     @orderby(-:prop)
 end
 
-# By gender
-prop_women_by_ethngrp_year = @chain sample begin
-    @groupby(:year, :ethngrp_f)
-    @combine(:prop = mean(:inter_ethngrp))
-    @rename(:ethngrp = :ethngrp_f)
-    @transform(:sex = "female")
-    @orderby(:year)
-end
-
-prop_men_by_ethngrp_year = @chain sample begin
-    @groupby(:year, :ethngrp_m)
-    @combine(:prop = mean(:inter_ethngrp))
-    @rename(:ethngrp = :ethngrp_m)
-    @transform(:sex = "male")
-    @orderby(:year)
-end
-
-prop_by_ethngrp_year = vcat(prop_women_by_ethngrp_year, prop_men_by_ethngrp_year)
-
-# Plot
-f = Figure(; size=(1200, 800), fontsize=12)
-
-inter_ethngrp_plt = data(prop_by_ethngrp_year) *
-                    mapping(
-                        :year => "",
-                        :prop => "Proportion",
-                        color=:sex => "Gender",
-                        layout=:ethngrp
-                    ) *
-                    visual(ScatterLines)
-
-plt = draw!(
-    f[1, 1],
-    inter_ethngrp_plt,
-    scales(Color=(; palette=["#b3bfd1", "#b04238"])),
-    axis=(;
-        xticks=[1982, 1990, 2000, 2010],
-        yticks=(0:0.2:0.8, ["0%", "20%", "40%", "60%", "80%"])
-    )
-)
-
-legend!(f[1, 2], plt)
-
-f
-
-save("figures/trends_by_ethngrp.png", f; px_per_unit=2)
+Arrow.write("data/visualization/fig1_trends_by_ethngrp.arrow", prop_by_ethngrp_year)
 
 # 3 By Education ----------------------------------------------------------
 
@@ -106,34 +61,7 @@ inter_by_edu_df = @chain inter_by_edu_df begin
     @transform(:year = categorical(:year))
 end
 
-# Plot
-f = Figure(; size=(1200, 800), fontsize=12)
-
-inter_by_edu_plt = data(inter_by_edu_df) *
-                   mapping(
-                       :year => "",
-                       :prop => "Proportion",
-                       color=:edu => "Education",
-                       dodge=:edu => "Education",
-                       layout=:ethngrp
-                   ) *
-                   visual(BarPlot)
-
-plt = draw!(
-    f[1, 1],
-    inter_by_edu_plt,
-    scales(Color=(; palette=["#d7e1ee", "#a4a2a8", "#991f17"])),
-    axis=(;
-        yticks=(0:0.2:1, ["0%", "20%", "40%", "60%", "80%", "100%"]),
-        limits = (nothing, (0, 1))
-    )
-)
-
-legend!(f[1, 2], plt)
-
-f
-
-save("figures/trends_by_edu.png", f; px_per_unit=2)
+Arrow.write("data/visualization/fig2_trends_by_edu.arrow", inter_by_edu_df)
 
 # Full table by gender
 inter_by_edu_gender_df = @chain df_long begin
