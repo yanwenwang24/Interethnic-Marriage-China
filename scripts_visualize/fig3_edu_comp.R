@@ -9,7 +9,7 @@
 
 df <- read_feather("data/visualization/fig3_edu_comp.arrow") |>
   mutate(
-    ethngrp = factor(ethngrp, levels = rev(ethngrp_order)),
+    ethngrp = factor(ethngrp, levels = ethngrp_order),
     edu = factor(edu, levels = edu_3_order),
     year = factor(year, levels = rev(year_order))
   )

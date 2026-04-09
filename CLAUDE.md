@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Replication package for "Bridging Ethnic Boundaries: The Evolution of Interethnic Marriage in China, 1982-2010" (Wang & Mu). Analyzes interethnic marriage patterns using China's Census data (1982, 1990, 2000, 2010) with log-linear models and the Exchange Index methodology (Xie & Dong, 2021).
+Replication package for "Three Decades of Interethnic Marriage in China: Ethnic Boundaries, Educational Sorting, and Status Exchange" (Wang & Mu). Analyzes interethnic marriage patterns using China's Census data (1982, 1990, 2000, 2010) with log-linear models and the Exchange Index methodology (Xie & Dong, 2021).
 
 ## Language and Dependencies
 
