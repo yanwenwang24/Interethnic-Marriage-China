@@ -2,7 +2,7 @@
 
 Replication package for:
 
-**Wang, Yanwen**, and Zheng Mu. “Three Decades of Interethnic Marriage in China: Ethnic Boundaries, Educational Sorting, and Status Exchange.” *Social Science Research*, Forthcoming.
+**Wang, Yanwen**, and Zheng Mu. “Three Decades of Interethnic Marriage in China: Ethnic Boundaries, Educational Sorting, and Status Exchange.” *Social Science Research*, 136:103352.
 
 ## Abstract
 
